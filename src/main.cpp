@@ -1,21 +1,35 @@
 /*******************************************************************************************
  *
- *   raylib [textures] example - sprite button
+ *   raylib [core] examples - basic screen manager
  *
- *   Example originally created with raylib 2.5, last time updated with raylib 2.5
+ *   NOTE: This example illustrates a very simple screen manager based on a states machines
+ *
+ *   Example originally created with raylib 4.0, last time updated with raylib 4.0
  *
  *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
  *   BSD-like license that allows static linking with closed source software
  *
- *   Copyright (c) 2019-2023 Ramon Santamaria (@raysan5)
+ *   Copyright (c) 2021-2023 Ramon Santamaria (@raysan5)
  *
  ********************************************************************************************/
 
 #include "raylib.h"
 
-#define NUM_FRAMES 3 // Number of frames (rectangles) for the button sprite texture
+//------------------------------------------------------------------------------------------
+// Types and Structures Definition
+//------------------------------------------------------------------------------------------
+typedef enum GameScreen
+{
+    INICIO = 0,
+    JUGAR,
+    OPCIONES,
+    CREDITOS
+} GameScreen;
+
 #define screenWidth 800
 #define screenHeight 450
+
+void menudraw(GameScreen currentScreen);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -24,27 +38,13 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
+    InitWindow(screenWidth, screenHeight, "SIGN MATCH - GAME");
 
-    InitWindow(screenWidth, screenHeight, "SIGN MATCH GAME");
+    GameScreen currentScreen = INICIO;
 
-    InitAudioDevice(); // Initialize audio device
+    // TODO: Initialize all required variables and load all required data here!
 
-    Sound fxButton = LoadSound("audio/resources/buttonsound.wav"); // Load button sound
-    Texture2D button = LoadTexture("resources/startbutton.png");   // Load button texture
-
-    // Define frame rectangle for drawing
-    float frameHeight = (float)button.height / NUM_FRAMES;
-    Rectangle sourceRec = {0, 0, (float)button.width, frameHeight};
-
-    // Define button bounds on screen
-    Rectangle btnBounds = {screenWidth / 2.0f - button.width / 2.0f, screenHeight / 2.0f - button.height / NUM_FRAMES / 2.0f, (float)button.width, frameHeight};
-
-    int btnState = 0;       // Button state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-    bool btnAction = false; // Button action should be activated
-
-    Vector2 mousePoint = {0.0f, 0.0f};
-
-    SetTargetFPS(60);
+    SetTargetFPS(60); // Set desired framerate (frames-per-second)
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -52,55 +52,95 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        mousePoint = GetMousePosition();
-        btnAction = false;
-
-        // Check button state
-        if (CheckCollisionPointRec(mousePoint, btnBounds))
+        switch (currentScreen)
         {
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                btnState = 2;
-            else
-                btnState = 1;
-
-            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                btnAction = true;
-        }
-        else
-            btnState = 0;
-
-        if (btnAction)
+        case INICIO: // AQUI EN ESTA OPCION ESTARA EL MENU.
         {
-            PlaySound(fxButton);
-
-            // TODO: Any desired action
+            if (IsKeyPressed(KEY_A))
+            {
+                currentScreen = JUGAR;
+            }
+            if (IsKeyPressed(KEY_S))
+            {
+                currentScreen = OPCIONES;
+            }
+            if (IsKeyPressed(KEY_D))
+            {
+                currentScreen = CREDITOS;
+            }
         }
-
-        // Calculate button frame rectangle to draw depending on button state
-        sourceRec.y = btnState * frameHeight;
-        //----------------------------------------------------------------------------------
-
+        break;
+        case JUGAR:
+        {
+            if (IsKeyPressed(KEY_DELETE))
+            {
+                currentScreen = INICIO;
+            }
+        }
+        break;
+        case OPCIONES:
+        {
+            if (IsKeyPressed(KEY_DELETE))
+            {
+                currentScreen = INICIO;
+            }
+        }
+        break;
+        case CREDITOS:
+        {
+            if (IsKeyPressed(KEY_DELETE))
+            {
+                currentScreen = INICIO;
+            }
+        }
+        break;
+        default:
+            break;
+        }
         // Draw
         //----------------------------------------------------------------------------------
-        BeginDrawing();
-
-        ClearBackground(RAYWHITE);
-
-        DrawTextureRec(button, sourceRec, (Vector2){btnBounds.x, btnBounds.y}, RAYWHITE); // Draw button frame
-
-        EndDrawing();
-        //----------------------------------------------------------------------------------
+        menudraw(currentScreen);
     }
 
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-    UnloadTexture(button); // Unload button texture
-    UnloadSound(fxButton); // Unload sound
-
-    CloseAudioDevice(); // Close audio device
+    // TODO: Unload all loaded data (textures, fonts, audio) here!
 
     CloseWindow(); // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+void menudraw(GameScreen currentScreen)
+{
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
+
+    switch (currentScreen)
+    {
+    case INICIO:
+        DrawText("INICIO SCREEN", 20, 20, 40, LIGHTGRAY);
+        DrawText("WAIT for 2 SECONDS...", 290, 220, 20, GRAY);
+        break;
+    case JUGAR:
+        DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
+        DrawText("JUGAR SCREEN", 20, 20, 40, DARKGREEN);
+        DrawText("PRESS ENTER or TAP to JUMP to OPCIONES SCREEN", 120, 220, 20, DARKGREEN);
+        break;
+    case OPCIONES:
+        DrawRectangle(0, 0, screenWidth, screenHeight, PURPLE);
+        DrawText("OPCIONES SCREEN", 20, 20, 40, MAROON);
+        DrawText("PRESS ENTER or TAP to JUMP to CREDITOS SCREEN", 130, 220, 20, MAROON);
+        break;
+    case CREDITOS:
+        DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
+        DrawText("CREDITOS SCREEN", 20, 20, 40, DARKBLUE);
+        DrawText("PRESS ENTER or TAP to RETURN to JUGAR SCREEN", 120, 220, 20, DARKBLUE);
+        break;
+    default:
+        break;
+    }
+
+    EndDrawing();
+
+    // ---- CERRAR ARCHIVOS ABIERTOS
 }
