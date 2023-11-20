@@ -29,6 +29,9 @@ typedef enum GameScreen
 #define screenWidth 800
 #define screenHeight 450
 
+Texture2D backgroundTexture;
+void LoadContent();
+void UnloadContent();
 void menudraw(GameScreen currentScreen);
 
 //------------------------------------------------------------------------------------
@@ -43,8 +46,9 @@ int main(void)
     GameScreen currentScreen = INICIO;
 
     // TODO: Initialize all required variables and load all required data here!
-
+    LoadContent();
     SetTargetFPS(60); // Set desired framerate (frames-per-second)
+
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -103,11 +107,24 @@ int main(void)
     }
 
     // TODO: Unload all loaded data (textures, fonts, audio) here!
+    UnloadContent();
 
     CloseWindow(); // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+void LoadContent()
+{
+    // Cargar la textura de fondo en el main
+    backgroundTexture = LoadTexture("resources/signmatch-MENU.png");
+}
+
+void UnloadContent()
+{
+    // Liberar la textura de fondo al final del programa
+    UnloadTexture(backgroundTexture);
 }
 
 void menudraw(GameScreen currentScreen)
@@ -118,29 +135,32 @@ void menudraw(GameScreen currentScreen)
     switch (currentScreen)
     {
     case INICIO:
+        DrawTexture(backgroundTexture, 0, 0, WHITE);
         DrawText("INICIO SCREEN", 20, 20, 40, LIGHTGRAY);
-        DrawText("WAIT for 2 SECONDS...", 290, 220, 20, GRAY);
+        DrawText("PRESS A to JUMP to JUGAR SCREEN", 120, 220, 20, GRAY);
+        DrawText("PRESS S to JUMP to OPCIONES SCREEN", 120, 240, 20, GRAY);
+        DrawText("PRESS D to JUMP to CREDITOS SCREEN", 120, 260, 20, GRAY);
+        DrawText("PRESS ESCAPE to EXIT", 120, 280, 20, GRAY);
         break;
     case JUGAR:
         DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
         DrawText("JUGAR SCREEN", 20, 20, 40, DARKGREEN);
-        DrawText("PRESS ENTER or TAP to JUMP to OPCIONES SCREEN", 120, 220, 20, DARKGREEN);
+        DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKGREEN);
         break;
     case OPCIONES:
         DrawRectangle(0, 0, screenWidth, screenHeight, PURPLE);
         DrawText("OPCIONES SCREEN", 20, 20, 40, MAROON);
-        DrawText("PRESS ENTER or TAP to JUMP to CREDITOS SCREEN", 130, 220, 20, MAROON);
+        DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, MAROON);
         break;
     case CREDITOS:
         DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
         DrawText("CREDITOS SCREEN", 20, 20, 40, DARKBLUE);
-        DrawText("PRESS ENTER or TAP to RETURN to JUGAR SCREEN", 120, 220, 20, DARKBLUE);
+        DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKBLUE);
         break;
     default:
         break;
     }
 
     EndDrawing();
-
     // ---- CERRAR ARCHIVOS ABIERTOS
 }
