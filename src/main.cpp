@@ -30,6 +30,7 @@ typedef enum GameScreen
 #define screenHeight 450
 
 Texture2D backgroundTexture;
+Sound buttonSound;
 void LoadContent();
 void UnloadContent();
 void menudraw(GameScreen currentScreen);
@@ -42,6 +43,7 @@ int main(void)
     // Initialization
     //--------------------------------------------------------------------------------------
     InitWindow(screenWidth, screenHeight, "SIGN MATCH - GAME");
+    InitAudioDevice();
 
     GameScreen currentScreen = INICIO;
 
@@ -62,14 +64,17 @@ int main(void)
         {
             if (IsKeyPressed(KEY_A))
             {
+                PlaySound(buttonSound);
                 currentScreen = JUGAR;
             }
             if (IsKeyPressed(KEY_S))
             {
+                PlaySound(buttonSound);
                 currentScreen = OPCIONES;
             }
             if (IsKeyPressed(KEY_D))
             {
+                PlaySound(buttonSound);
                 currentScreen = CREDITOS;
             }
         }
@@ -78,6 +83,7 @@ int main(void)
         {
             if (IsKeyPressed(KEY_DELETE))
             {
+                PlaySound(buttonSound);
                 currentScreen = INICIO;
             }
         }
@@ -86,6 +92,7 @@ int main(void)
         {
             if (IsKeyPressed(KEY_DELETE))
             {
+                PlaySound(buttonSound);
                 currentScreen = INICIO;
             }
         }
@@ -94,6 +101,7 @@ int main(void)
         {
             if (IsKeyPressed(KEY_DELETE))
             {
+                PlaySound(buttonSound);
                 currentScreen = INICIO;
             }
         }
@@ -119,12 +127,14 @@ void LoadContent()
 {
     // Cargar la textura de fondo en el main
     backgroundTexture = LoadTexture("resources/signmatch-MENU.png");
+    buttonSound = LoadSound("audio/resources/buttonsound.wav");
 }
 
 void UnloadContent()
 {
     // Liberar la textura de fondo al final del programa
     UnloadTexture(backgroundTexture);
+    UnloadSound(buttonSound);
 }
 
 void menudraw(GameScreen currentScreen)
@@ -137,10 +147,10 @@ void menudraw(GameScreen currentScreen)
     case INICIO:
         DrawTexture(backgroundTexture, 0, 0, WHITE);
         DrawText("INICIO SCREEN", 20, 20, 40, LIGHTGRAY);
-        DrawText("PRESS A to JUMP to JUGAR SCREEN", 120, 220, 20, GRAY);
-        DrawText("PRESS S to JUMP to OPCIONES SCREEN", 120, 240, 20, GRAY);
-        DrawText("PRESS D to JUMP to CREDITOS SCREEN", 120, 260, 20, GRAY);
-        DrawText("PRESS ESCAPE to EXIT", 120, 280, 20, GRAY);
+        DrawText("PRESS A to JUMP to JUGAR SCREEN", 120, 220, 20, YELLOW);
+        DrawText("PRESS S to JUMP to OPCIONES SCREEN", 120, 240, 20, YELLOW);
+        DrawText("PRESS D to JUMP to CREDITOS SCREEN", 120, 260, 20, YELLOW);
+        DrawText("PRESS ESCAPE to EXIT", 120, 280, 20, YELLOW);
         break;
     case JUGAR:
         DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
