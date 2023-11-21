@@ -51,6 +51,9 @@ int main(void)
     LoadContent();
     SetTargetFPS(60); // Set desired framerate (frames-per-second)
 
+    Image icon = LoadImage("resources/signmatchicon.png");
+    SetWindowIcon(icon);
+
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -116,6 +119,7 @@ int main(void)
 
     // TODO: Unload all loaded data (textures, fonts, audio) here!
     UnloadContent();
+    UnloadImage(icon);
 
     CloseWindow(); // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -127,6 +131,7 @@ void LoadContent()
 {
     // Cargar la textura de fondo en el main
     backgroundTexture = LoadTexture("resources/signmatch-MENU.png");
+    // AQUI PUEDO AGREGAR MAS IMAGENES PARA EL MENU, NO OLVIDAR AGREGARLAS EN EL UNLOADCONTENT.
     buttonSound = LoadSound("audio/resources/buttonsound.wav");
 }
 
@@ -172,5 +177,4 @@ void menudraw(GameScreen currentScreen)
     }
 
     EndDrawing();
-    // ---- CERRAR ARCHIVOS ABIERTOS
 }
