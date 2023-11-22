@@ -33,6 +33,10 @@ Texture2D backgroundTexture;
 Sound buttonSound;
 void LoadContent();
 void UnloadContent();
+void drawinicio();
+void drawjugar();
+void drawopciones();
+void drawcreditos();
 void menudraw(GameScreen currentScreen);
 
 //------------------------------------------------------------------------------------
@@ -132,6 +136,7 @@ void LoadContent()
     // Cargar la textura de fondo en el main
     backgroundTexture = LoadTexture("resources/SG_MENU.png");
     // AQUI PUEDO AGREGAR MAS IMAGENES PARA EL MENU, NO OLVIDAR AGREGARLAS EN EL UNLOADCONTENT.
+    // Texture2D buttonTexture = LoadTexture("resources/startbutton1.png");
     buttonSound = LoadSound("audio/resources/buttonsound.wav");
 }
 
@@ -142,6 +147,36 @@ void UnloadContent()
     UnloadSound(buttonSound);
 }
 
+void drawinicio()
+{
+    DrawTexture(backgroundTexture, 0, 0, WHITE);
+    DrawText("PRESS A to JUMP to JUGAR SCREEN", 120, 220, 20, YELLOW);
+    DrawText("PRESS S to JUMP to OPCIONES SCREEN", 120, 240, 20, YELLOW);
+    DrawText("PRESS D to JUMP to CREDITOS SCREEN", 120, 260, 20, YELLOW);
+    DrawText("PRESS ESCAPE to EXIT", 120, 280, 20, YELLOW);
+}
+
+void drawjugar()
+{
+    DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
+    DrawText("JUGAR SCREEN", 20, 20, 40, DARKGREEN);
+    DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKGREEN);
+}
+
+void drawopciones()
+{
+    DrawRectangle(0, 0, screenWidth, screenHeight, PURPLE);
+    DrawText("OPCIONES SCREEN", 20, 20, 40, MAROON);
+    DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, MAROON);
+}
+
+void drawcreditos()
+{
+    DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
+    DrawText("CREDITOS SCREEN", 20, 20, 40, DARKBLUE);
+    DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKBLUE);
+}
+
 void menudraw(GameScreen currentScreen)
 {
     BeginDrawing();
@@ -150,27 +185,16 @@ void menudraw(GameScreen currentScreen)
     switch (currentScreen)
     {
     case INICIO:
-        DrawTexture(backgroundTexture, 0, 0, WHITE);
-        DrawText("INICIO SCREEN", 20, 20, 40, LIGHTGRAY);
-        DrawText("PRESS A to JUMP to JUGAR SCREEN", 120, 220, 20, YELLOW);
-        DrawText("PRESS S to JUMP to OPCIONES SCREEN", 120, 240, 20, YELLOW);
-        DrawText("PRESS D to JUMP to CREDITOS SCREEN", 120, 260, 20, YELLOW);
-        DrawText("PRESS ESCAPE to EXIT", 120, 280, 20, YELLOW);
+        drawinicio();
         break;
     case JUGAR:
-        DrawRectangle(0, 0, screenWidth, screenHeight, GREEN);
-        DrawText("JUGAR SCREEN", 20, 20, 40, DARKGREEN);
-        DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKGREEN);
+        drawjugar();
         break;
     case OPCIONES:
-        DrawRectangle(0, 0, screenWidth, screenHeight, PURPLE);
-        DrawText("OPCIONES SCREEN", 20, 20, 40, MAROON);
-        DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, MAROON);
+        drawopciones();
         break;
     case CREDITOS:
-        DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
-        DrawText("CREDITOS SCREEN", 20, 20, 40, DARKBLUE);
-        DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKBLUE);
+        drawcreditos();
         break;
     default:
         break;
