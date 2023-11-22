@@ -51,7 +51,7 @@ int main(void)
     LoadContent();
     SetTargetFPS(60); // Set desired framerate (frames-per-second)
 
-    Image icon = LoadImage("resources/signmatchicon.png");
+    Image icon = LoadImage("resources/SG_ICONO.png");
     SetWindowIcon(icon);
 
     //--------------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ int main(void)
 void LoadContent()
 {
     // Cargar la textura de fondo en el main
-    backgroundTexture = LoadTexture("resources/signmatch-MENU.png");
+    backgroundTexture = LoadTexture("resources/SG_MENU.png");
     // AQUI PUEDO AGREGAR MAS IMAGENES PARA EL MENU, NO OLVIDAR AGREGARLAS EN EL UNLOADCONTENT.
     buttonSound = LoadSound("audio/resources/buttonsound.wav");
 }
