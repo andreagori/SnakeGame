@@ -19,7 +19,6 @@ Texture2D backgroundTexture;
 Sound buttonSound;
 Texture2D buttonTextureA;
 Texture2D buttonTextureB;
-Texture2D buttonTextureC;
 
 void LoadContent();
 void UnloadContent();
@@ -70,11 +69,6 @@ int main(void)
                 currentScreen = JUGAR;
             }
             if (IsKeyPressed(KEY_S) || buttonClicked == 2)
-            {
-                PlaySound(buttonSound);
-                currentScreen = OPCIONES;
-            }
-            if (IsKeyPressed(KEY_D) || buttonClicked == 3)
             {
                 PlaySound(buttonSound);
                 currentScreen = CREDITOS;
@@ -131,9 +125,8 @@ void LoadContent()
     // Cargar la textura de fondo en el main
     backgroundTexture = LoadTexture("resources/fullback.png");
     // Ajustar el tamaño de las imágenes según la resolución de la pantalla
-    buttonTextureA = LoadTexture("resources/startbutton1.png");
-    buttonTextureB = LoadTexture("resources/startbutton2.png");
-    buttonTextureC = LoadTexture("resources/startbutton.png");
+    buttonTextureA = LoadTexture("resources/SM_BOTON.png");
+    buttonTextureB = LoadTexture("resources/SM_BOTONcred.png");
     buttonSound = LoadSound("audio/resources/buttonsound.wav");
 }
 
@@ -144,7 +137,6 @@ void UnloadContent()
     UnloadSound(buttonSound);
     UnloadTexture(buttonTextureA);
     UnloadTexture(buttonTextureB);
-    UnloadTexture(buttonTextureC);
 }
 
 int drawinicio()
@@ -158,24 +150,20 @@ int drawinicio()
         WHITE);
 
     // Dibujar los botones
-    Rectangle buttonRectA = {120.0f, 220.0f, (float)buttonTextureA.width, (float)buttonTextureA.height};
+    Rectangle buttonRectA = {585.0f, 320.0, (float)buttonTextureA.width, (float)buttonTextureA.height};
     DrawTexture(buttonTextureA, buttonRectA.x, buttonRectA.y, WHITE);
-
-    Rectangle buttonRectB = {120.0f, 240.0f, (float)buttonTextureB.width, (float)buttonTextureB.height};
+    Rectangle buttonRectB = {585.0f, 420.0f, (float)buttonTextureB.width, (float)buttonTextureB.height};
     DrawTexture(buttonTextureB, buttonRectB.x, buttonRectB.y, WHITE);
-
-    Rectangle buttonRectC = {120.0f, 260.0f, (float)buttonTextureC.width, (float)buttonTextureC.height};
-    DrawTexture(buttonTextureC, buttonRectC.x, buttonRectC.y, WHITE);
 
     // Verificar si el mouse está sobre los botones
     bool isMouseOverButtonA = CheckCollisionPointRec(GetMousePosition(), buttonRectA);
     bool isMouseOverButtonB = CheckCollisionPointRec(GetMousePosition(), buttonRectB);
-    bool isMouseOverButtonC = CheckCollisionPointRec(GetMousePosition(), buttonRectC);
+    // bool isMouseOverButtonC = CheckCollisionPointRec(GetMousePosition(), buttonRectC);
 
     // Cambiar el color del texto según la interacción
     DrawText("PRESS A to JUMP to JUGAR SCREEN", 120, 220, 20, isMouseOverButtonA ? RED : YELLOW);
     DrawText("PRESS S to JUMP to OPCIONES SCREEN", 120, 240, 20, isMouseOverButtonB ? BLUE : YELLOW);
-    DrawText("PRESS D to JUMP to CREDITOS SCREEN", 120, 260, 20, isMouseOverButtonC ? GREEN : YELLOW);
+    // DrawText("PRESS D to JUMP to CREDITOS SCREEN", 120, 260, 20, isMouseOverButtonC ? GREEN : YELLOW);
 
     // Verificar si se hizo clic en algún botón
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -184,8 +172,6 @@ int drawinicio()
             return 1; // Botón A clickeado
         if (isMouseOverButtonB)
             return 2; // Botón B clickeado
-        if (isMouseOverButtonC)
-            return 3; // Botón C clickeado
     }
 
     return 0; // Ningún botón
@@ -254,7 +240,7 @@ void ToggleFullscreenAndResize()
         else
         {
             // Restaurar la resolución original al salir de pantalla completa
-            screenWidth =  GetMonitorWidth(0);
+            screenWidth = GetMonitorWidth(0);
             screenHeight = GetMonitorHeight(0);
         }
 
