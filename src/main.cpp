@@ -19,6 +19,7 @@ Texture2D backgroundTexture;
 Sound buttonSound;
 Texture2D buttonTextureA;
 Texture2D buttonTextureB;
+Music musica_fondo;
 
 void LoadContent();
 void UnloadContent();
@@ -28,6 +29,7 @@ void drawopciones();
 void drawcreditos();
 void menudraw(GameScreen currentScreen);
 void ToggleFullscreenAndResize();
+bool musica( bool musicToggle, bool musicPaused);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -45,9 +47,12 @@ int main(void)
     // TODO: Initialize all required variables and load all required data here!
     LoadContent();
     SetTargetFPS(60); // Set desired framerate (frames-per-second)
+    bool musicPaused = false;
+    bool musicToggle = false;
 
     Image icon = LoadImage("resources/SG_ICONO.png");
     SetWindowIcon(icon);
+    PlayMusicStream(musica_fondo);
 
     //--------------------------------------------------------------------------------------
 
@@ -63,6 +68,7 @@ int main(void)
         {
         case INICIO: // AQUI EN ESTA OPCION ESTARA EL MENU.
         {
+
             if (IsKeyPressed(KEY_A) || buttonClicked == 1)
             {
                 PlaySound(buttonSound);
@@ -72,6 +78,11 @@ int main(void)
             {
                 PlaySound(buttonSound);
                 currentScreen = CREDITOS;
+            }
+            if (IsKeyPressed(KEY_M))
+            {
+                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
+                musicPaused = musica(musicToggle, musicPaused);
             }
         }
         break;
@@ -108,6 +119,7 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         menudraw(currentScreen);
+        UpdateMusicStream(musica_fondo);
     }
 
     // TODO: Unload all loaded data (textures, fonts, audio) here!
@@ -128,6 +140,31 @@ void LoadContent()
     buttonTextureA = LoadTexture("resources/SM_BOTON.png");
     buttonTextureB = LoadTexture("resources/SM_BOTONcred.png");
     buttonSound = LoadSound("audio/resources/buttonsound.wav");
+    musica_fondo = LoadMusicStream("audio/resources/fondo.mp3");
+    SetMusicVolume(musica_fondo, 1.0f);
+}
+
+bool musica( bool musicToggle, bool musicPaused)
+{
+    if (musicToggle)
+    {
+        // Si musicToggle es true, pausar la música si no está pausada
+        if (!musicPaused)
+        {
+            PauseMusicStream(musica_fondo);
+            musicPaused = true;
+        }
+    }
+    else
+    {
+        // Si musicToggle es false, reanudar la música si está pausada
+        if (musicPaused)
+        {
+            ResumeMusicStream(musica_fondo);
+            musicPaused = false;
+        }
+    }
+    return musicPaused;
 }
 
 void UnloadContent()
@@ -137,6 +174,7 @@ void UnloadContent()
     UnloadSound(buttonSound);
     UnloadTexture(buttonTextureA);
     UnloadTexture(buttonTextureB);
+    UnloadMusicStream(musica_fondo);
 }
 
 int drawinicio()
