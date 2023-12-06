@@ -1,4 +1,6 @@
 #include "raylib.h"
+#include <cmath>
+// #include "raymath.h"
 
 //------------------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -7,7 +9,6 @@ typedef enum GameScreen
 {
     INICIO = 0,
     JUGAR,
-    OPCIONES,
     CREDITOS
 } GameScreen;
 
@@ -29,7 +30,7 @@ void drawopciones();
 void drawcreditos();
 void menudraw(GameScreen currentScreen);
 void ToggleFullscreenAndResize();
-bool musica( bool musicToggle, bool musicPaused);
+bool musica(bool musicToggle, bool musicPaused);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -69,12 +70,12 @@ int main(void)
         case INICIO: // AQUI EN ESTA OPCION ESTARA EL MENU.
         {
 
-            if (IsKeyPressed(KEY_A) || buttonClicked == 1)
+            if (buttonClicked == 1)
             {
                 PlaySound(buttonSound);
                 currentScreen = JUGAR;
             }
-            if (IsKeyPressed(KEY_S) || buttonClicked == 2)
+            if (buttonClicked == 2)
             {
                 PlaySound(buttonSound);
                 currentScreen = CREDITOS;
@@ -87,15 +88,6 @@ int main(void)
         }
         break;
         case JUGAR:
-        {
-            if (IsKeyPressed(KEY_DELETE))
-            {
-                PlaySound(buttonSound);
-                currentScreen = INICIO;
-            }
-        }
-        break;
-        case OPCIONES:
         {
             if (IsKeyPressed(KEY_DELETE))
             {
@@ -144,7 +136,7 @@ void LoadContent()
     SetMusicVolume(musica_fondo, 1.0f);
 }
 
-bool musica( bool musicToggle, bool musicPaused)
+bool musica(bool musicToggle, bool musicPaused)
 {
     if (musicToggle)
     {
@@ -189,19 +181,34 @@ int drawinicio()
 
     // Dibujar los botones
     Rectangle buttonRectA = {585.0f, 320.0, (float)buttonTextureA.width, (float)buttonTextureA.height};
-    DrawTexture(buttonTextureA, buttonRectA.x, buttonRectA.y, WHITE);
     Rectangle buttonRectB = {585.0f, 420.0f, (float)buttonTextureB.width, (float)buttonTextureB.height};
-    DrawTexture(buttonTextureB, buttonRectB.x, buttonRectB.y, WHITE);
 
     // Verificar si el mouse está sobre los botones
     bool isMouseOverButtonA = CheckCollisionPointRec(GetMousePosition(), buttonRectA);
     bool isMouseOverButtonB = CheckCollisionPointRec(GetMousePosition(), buttonRectB);
-    // bool isMouseOverButtonC = CheckCollisionPointRec(GetMousePosition(), buttonRectC);
 
-    // Cambiar el color del texto según la interacción
-    DrawText("PRESS A to JUMP to JUGAR SCREEN", 120, 220, 20, isMouseOverButtonA ? RED : YELLOW);
-    DrawText("PRESS S to JUMP to OPCIONES SCREEN", 120, 240, 20, isMouseOverButtonB ? BLUE : YELLOW);
-    // DrawText("PRESS D to JUMP to CREDITOS SCREEN", 120, 260, 20, isMouseOverButtonC ? GREEN : YELLOW);
+    // Cambiar el tamaño del botón A si el mouse está sobre él
+    if (isMouseOverButtonA)
+    {
+        // Agrandar y reducir el botón A en un bucle
+        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
+        buttonRectA.width = buttonTextureA.width * scale;
+        buttonRectA.height = buttonTextureA.height * scale;
+    }
+
+    if (isMouseOverButtonB)
+    {
+        // Agrandar y reducir el botón B en un bucle
+        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
+        buttonRectB.width = buttonTextureB.width * scale;
+        buttonRectB.height = buttonTextureB.height * scale;
+    }
+
+    // Ajustar la posición del botón para que sea el centro del botón
+    Vector2 buttonPosition = {buttonRectA.x + buttonRectA.width / 2, buttonRectA.y + buttonRectA.height / 2};
+    Vector2 buttonPositionB = {buttonRectB.x + buttonRectB.width / 2, buttonRectB.y + buttonRectB.height / 2};
+    DrawTexturePro(buttonTextureA, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureA.width), static_cast<float>(buttonTextureA.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRectA.width, buttonRectA.height}, (Vector2){buttonRectA.width / 2, buttonRectA.height / 2}, 0.0f, WHITE);
+    DrawTexturePro(buttonTextureB, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureB.width), static_cast<float>(buttonTextureB.height)}, (Rectangle){buttonPositionB.x, buttonPositionB.y, buttonRectB.width, buttonRectB.height}, (Vector2){buttonRectB.width / 2, buttonRectB.height / 2}, 0.0f, WHITE);
 
     // Verificar si se hizo clic en algún botón
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -220,13 +227,6 @@ void drawjugar()
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), GREEN);
     DrawText("JUGAR SCREEN", 20, 20, 40, DARKGREEN);
     DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKGREEN);
-}
-
-void drawopciones()
-{
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), PURPLE);
-    DrawText("OPCIONES SCREEN", 20, 20, 40, MAROON);
-    DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, MAROON);
 }
 
 void drawcreditos()
@@ -248,9 +248,6 @@ void menudraw(GameScreen currentScreen)
         break;
     case JUGAR:
         drawjugar();
-        break;
-    case OPCIONES:
-        drawopciones();
         break;
     case CREDITOS:
         drawcreditos();
