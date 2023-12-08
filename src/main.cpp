@@ -6,7 +6,10 @@ typedef enum GameScreen
 {
     INICIO = 0,
     JUGAR,
-    CREDITOS
+    CREDITOS,
+    BASICOS,
+    LETRAS,
+    COLORES
 } GameScreen;
 
 // SACAR LA RESOLUCION DEL MONITOR
@@ -18,6 +21,9 @@ Texture2D backgroundTexture;
 // 07/12/23 Añadi imagenes para los fondos
 Texture2D backgroundTextureA;
 Texture2D backgroundTextureB;
+Texture2D backgroundTextureC;
+Texture2D backgroundTextureD;
+Texture2D backgroundTextureE;
 // SONIDO DEL BOTON
 Sound buttonSound;
 // BOTONES
@@ -31,12 +37,17 @@ Texture2D buttonTextureE;
 // MUSICA
 Music musica_fondo;
 
+// CARGAR CONTENIDO
 void LoadContent();
 void UnloadContent();
+// PANTALLAS
 int drawinicio();
-void drawjugar();
+int drawjugar();
 void drawopciones();
-void drawcreditos();
+void drawbasicos();
+void drawletras();
+void drawcolores();
+// EXTRAS
 void menudraw(GameScreen currentScreen);
 void ToggleFullscreenAndResize();
 bool musica(bool musicToggle, bool musicPaused);
@@ -70,6 +81,8 @@ int main(void)
         ToggleFullscreenAndResize(); // MANEJAR CAMBIOS DE PANTALLA COMPLETA Y TAMAÑO DE VENTANA
 
         int buttonClicked = drawinicio();
+        int buttonClicked2 = drawjugar();
+
         switch (currentScreen)
         {
         case INICIO: // AQUI EN ESTA OPCION ESTARA EL MENU.
@@ -92,7 +105,22 @@ int main(void)
         }
         break;
         case JUGAR:
-        {
+        {   
+            if (buttonClicked2 == 1)
+            {
+                PlaySound(buttonSound);
+                currentScreen = BASICOS;
+            }
+            if (buttonClicked2 == 2)
+            {
+                PlaySound(buttonSound);
+                currentScreen = LETRAS;
+            }
+            if (buttonClicked2 == 3)
+            {
+                PlaySound(buttonSound);
+                currentScreen = COLORES;
+            }
             if (IsKeyPressed(KEY_DELETE))
             {
                 PlaySound(buttonSound);
@@ -106,6 +134,30 @@ int main(void)
             {
                 PlaySound(buttonSound);
                 currentScreen = INICIO;
+            }
+        }
+        case BASICOS:
+        {
+            if (IsKeyPressed(KEY_DELETE))
+            {
+                PlaySound(buttonSound);
+                currentScreen = JUGAR;
+            }
+        }
+        case LETRAS:
+        {
+            if (IsKeyPressed(KEY_DELETE))
+            {
+                PlaySound(buttonSound);
+                currentScreen = JUGAR;
+            }
+        }
+        case COLORES:
+        {
+            if (IsKeyPressed(KEY_DELETE))
+            {
+                PlaySound(buttonSound);
+                currentScreen = JUGAR;
             }
         }
         break;
@@ -136,9 +188,14 @@ void LoadContent()
 {
     /* CARGAR LA TEXTURA DE FONDO EN EL MAIN */
     // 07/12/23 Cambio de imagen de fondo con doble de resolucion (3960 x 2160)
+    // Pantalla Inicio
     backgroundTexture = LoadTexture("resources/SM_Pantalla.png");
     backgroundTextureA = LoadTexture("resources/SM_PantallaCreditos.png");
     backgroundTextureB = LoadTexture("resources/SM_PantallaJugar.png");
+    // Pantalla Jugar
+    backgroundTextureC = LoadTexture("resources/SM_PantallaBasicos.png");
+    backgroundTextureD = LoadTexture("resources/SM_PantallaLetras.png");
+    backgroundTextureE = LoadTexture("resources/SM_PantallaColores.png");
     /* AJUSTAR EL TAMAÑO DE LAS IMAGENES SEGUN LA RESOLUCION DE LA PANTALLA */
     // Pantalla Inicio
     buttonTextureA = LoadTexture("resources/SM_BotonJugar_1.png");
@@ -259,7 +316,7 @@ int drawinicio()
 
 /* --------------------------------------------------------------------------------------------------- */
 
-void drawjugar()
+int drawjugar()
 {
     DrawTexturePro(
         backgroundTextureB,
@@ -313,6 +370,19 @@ void drawjugar()
     DrawTexturePro(buttonTextureC, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureC.width), static_cast<float>(buttonTextureC.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRectC.width, buttonRectC.height}, (Vector2){buttonRectC.width / 2, buttonRectC.height / 2}, 0.0f, WHITE);
     DrawTexturePro(buttonTextureD, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureD.width), static_cast<float>(buttonTextureD.height)}, (Rectangle){buttonPositionB.x, buttonPositionB.y, buttonRectD.width, buttonRectD.height}, (Vector2){buttonRectD.width / 2, buttonRectD.height / 2}, 0.0f, WHITE);
     DrawTexturePro(buttonTextureE, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureE.width), static_cast<float>(buttonTextureE.height)}, (Rectangle){buttonPositionC.x, buttonPositionC.y, buttonRectE.width, buttonRectE.height}, (Vector2){buttonRectE.width / 2, buttonRectE.height / 2}, 0.0f, WHITE);
+
+    /* VERIFICAR SI SE HIZO CLICK EN EL BOTON */
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        if (isMouseOverButtonC)
+            return 1; // Botón C clickeado
+        if (isMouseOverButtonD)
+            return 2; // Botón D clickeado
+        if (isMouseOverButtonE)
+            return 3; // Botón D clickeado
+    }
+
+    return 0; // Ningún botón
 }
 
 /* --------------------------------------------------------------------------------------------------- */
@@ -321,6 +391,45 @@ void drawcreditos()
 {
     DrawTexturePro(
         backgroundTextureA,
+        (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
+}
+
+/* --------------------------------------------------------------------------------------------------- */
+
+void drawbasicos()
+{
+    DrawTexturePro(
+        backgroundTextureC,
+        (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
+}
+
+/* --------------------------------------------------------------------------------------------------- */
+
+void drawletras()
+{
+    DrawTexturePro(
+        backgroundTextureD,
+        (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
+}
+
+/* --------------------------------------------------------------------------------------------------- */
+
+void drawcolores()
+{
+    DrawTexturePro(
+        backgroundTextureE,
         (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
         (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
         (Vector2){0, 0},
@@ -345,6 +454,15 @@ void menudraw(GameScreen currentScreen)
         break;
     case CREDITOS:
         drawcreditos();
+        break;
+    case BASICOS:
+        drawbasicos();
+        break;
+    case LETRAS:
+        drawletras();
+        break;
+    case COLORES:
+        drawcolores();
         break;
     default:
         break;
