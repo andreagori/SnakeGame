@@ -13,10 +13,17 @@ typedef enum GameScreen
 int screenWidth = GetMonitorWidth(0);
 int screenHeight = GetMonitorHeight(0);
 
+// FONDOS
 Texture2D backgroundTexture;
+// 07/12/23 Añadi imagenes para los fondos
+Texture2D backgroundTextureA;
+Texture2D backgroundTextureB;
+// SONIDO DEL BOTON
 Sound buttonSound;
+// BOTONES
 Texture2D buttonTextureA;
 Texture2D buttonTextureB;
+// MUSICA
 Music musica_fondo;
 
 void LoadContent();
@@ -123,10 +130,13 @@ int main(void)
 void LoadContent()
 {
     /* CARGAR LA TEXTURA DE FONDO EN EL MAIN */
-    backgroundTexture = LoadTexture("resources/fullback.png");
+    // 07/12/23 Cambio de imagen de fondo con doble de resolucion (3960 x 2160)
+    backgroundTexture = LoadTexture("resources/SM_Pantalla.png");
+    backgroundTextureA = LoadTexture("resources/SM_PantallaCreditos.png");
+    backgroundTextureB = LoadTexture("resources/SM_PantallaJugar.png");
     /* AJUSTAR EL TAMAÑO DE LAS IMAGENES SEGUN LA RESOLUCION DE LA PANTALLA */
-    buttonTextureA = LoadTexture("resources/SM_BOTON.png");
-    buttonTextureB = LoadTexture("resources/SM_BOTONcred.png");
+    buttonTextureA = LoadTexture("resources/SM_BotonJugar_1.png");
+    buttonTextureB = LoadTexture("resources/SM_BotonCreditos.png");
     buttonSound = LoadSound("audio/resources/buttonsound.wav");
     musica_fondo = LoadMusicStream("audio/resources/fondo.mp3");
     SetMusicVolume(musica_fondo, 1.0f);
@@ -163,6 +173,8 @@ void UnloadContent()
 {
     /* LIBERAR LA TEXTURA DE FONDO AL FINAL DEL PROGRAMA */
     UnloadTexture(backgroundTexture);
+    UnloadTexture(backgroundTextureA);
+    UnloadTexture(backgroundTextureB);
     UnloadSound(buttonSound);
     UnloadTexture(buttonTextureA);
     UnloadTexture(buttonTextureB);
@@ -182,8 +194,10 @@ int drawinicio()
         WHITE);
 
     /* DIBUJAR LOS BOTONES */
-    Rectangle buttonRectA = {585.0f, 320.0, (float)buttonTextureA.width, (float)buttonTextureA.height};
-    Rectangle buttonRectB = {585.0f, 420.0f, (float)buttonTextureB.width, (float)buttonTextureB.height};
+    // 07/12/23 Cambios en esta parte para ajustar que esten centrados horizontalmente a pesar del tamaño de la pantalla
+    // Tambien modifique la distancia entre ambos botones
+    Rectangle buttonRectA = {(GetScreenWidth() - buttonTextureA.width) / 2, 420.0f, (float)buttonTextureA.width, (float)buttonTextureA.height};
+    Rectangle buttonRectB = {(GetScreenWidth() - buttonTextureB.width) / 2, 970.0f, (float)buttonTextureB.width, (float)buttonTextureB.height};
 
     /* VERIFICAR SI EL MOUSE ESTA SOBRE LOS BOTONES */
     bool isMouseOverButtonA = CheckCollisionPointRec(GetMousePosition(), buttonRectA);
@@ -228,18 +242,26 @@ int drawinicio()
 
 void drawjugar()
 {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), GREEN);
-    DrawText("JUGAR SCREEN", 20, 20, 40, DARKGREEN);
-    DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKGREEN);
+    DrawTexturePro(
+        backgroundTextureB,
+        (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
 }
 
 /* --------------------------------------------------------------------------------------------------- */
 
 void drawcreditos()
 {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
-    DrawText("CREDITOS SCREEN", 20, 20, 40, DARKBLUE);
-    DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKBLUE);
+    DrawTexturePro(
+        backgroundTextureA,
+        (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
 }
 
 /* --------------------------------------------------------------------------------------------------- */
