@@ -21,8 +21,13 @@ Texture2D backgroundTextureB;
 // SONIDO DEL BOTON
 Sound buttonSound;
 // BOTONES
+// Pantalla Inicio
 Texture2D buttonTextureA;
 Texture2D buttonTextureB;
+// PantallaJugar
+Texture2D buttonTextureC;
+Texture2D buttonTextureD;
+Texture2D buttonTextureE;
 // MUSICA
 Music musica_fondo;
 
@@ -135,8 +140,14 @@ void LoadContent()
     backgroundTextureA = LoadTexture("resources/SM_PantallaCreditos.png");
     backgroundTextureB = LoadTexture("resources/SM_PantallaJugar.png");
     /* AJUSTAR EL TAMAÑO DE LAS IMAGENES SEGUN LA RESOLUCION DE LA PANTALLA */
+    // Pantalla Inicio
     buttonTextureA = LoadTexture("resources/SM_BotonJugar_1.png");
     buttonTextureB = LoadTexture("resources/SM_BotonCreditos.png");
+    // Pantalla Jugar
+    buttonTextureC = LoadTexture("resources/SM_BotonBasicos.png");
+    buttonTextureD = LoadTexture("resources/SM_BotonLetras.png");
+    buttonTextureE = LoadTexture("resources/SM_BotonColores.png");
+    // Sonido/Musica
     buttonSound = LoadSound("audio/resources/buttonsound.wav");
     musica_fondo = LoadMusicStream("audio/resources/fondo.mp3");
     SetMusicVolume(musica_fondo, 1.0f);
@@ -172,12 +183,20 @@ bool musica(bool musicToggle, bool musicPaused)
 void UnloadContent()
 {
     /* LIBERAR LA TEXTURA DE FONDO AL FINAL DEL PROGRAMA */
+    // FONDOS
     UnloadTexture(backgroundTexture);
     UnloadTexture(backgroundTextureA);
     UnloadTexture(backgroundTextureB);
+    // BOTONES
     UnloadSound(buttonSound);
+    // Pantalla Inicio
     UnloadTexture(buttonTextureA);
     UnloadTexture(buttonTextureB);
+    // Pantalla Jugar
+    UnloadTexture(buttonTextureC);
+    UnloadTexture(buttonTextureD);
+    UnloadTexture(buttonTextureE);
+    // MUSICA
     UnloadMusicStream(musica_fondo);
 }
 
@@ -203,7 +222,7 @@ int drawinicio()
     bool isMouseOverButtonA = CheckCollisionPointRec(GetMousePosition(), buttonRectA);
     bool isMouseOverButtonB = CheckCollisionPointRec(GetMousePosition(), buttonRectB);
 
-    /* CAMBIAR EL TAMAÑO DEL BOTON (A) SI EL MOUSE ESTA SOBRE DE EL */
+    /* CAMBIAR EL TAMAÑO DEL BOTON (A,B) SI EL MOUSE ESTA SOBRE DE EL */
     if (isMouseOverButtonA)
     {
         /* AGRANDAR Y REDUCIR (A) */
@@ -249,6 +268,51 @@ void drawjugar()
         (Vector2){0, 0},
         0.0f,
         WHITE);
+
+        /* DIBUJAR LOS BOTONES */
+    // 07/12/23 Cambios en esta parte para ajustar que esten centrados horizontalmente a pesar del tamaño de la pantalla
+    // Tambien modifique la distancia entre ambos botones
+    Rectangle buttonRectC = {(GetScreenWidth() - buttonTextureC.width) / 2, 400.0f, (float)buttonTextureC.width, (float)buttonTextureC.height};
+    Rectangle buttonRectD = {(GetScreenWidth() - buttonTextureD.width) / 2, 580.0f, (float)buttonTextureD.width, (float)buttonTextureD.height};
+    Rectangle buttonRectE = {(GetScreenWidth() - buttonTextureE.width) / 2, 760.0f, (float)buttonTextureE.width, (float)buttonTextureE.height};
+
+    /* VERIFICAR SI EL MOUSE ESTA SOBRE LOS BOTONES */
+    bool isMouseOverButtonC = CheckCollisionPointRec(GetMousePosition(), buttonRectC);
+    bool isMouseOverButtonD = CheckCollisionPointRec(GetMousePosition(), buttonRectD);
+    bool isMouseOverButtonE = CheckCollisionPointRec(GetMousePosition(), buttonRectE);
+
+    /* CAMBIAR EL TAMAÑO DEL BOTON (C,D,E) SI EL MOUSE ESTA SOBRE DE EL */
+    if (isMouseOverButtonC)
+    {
+        /* AGRANDAR Y REDUCIR (C) */
+        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
+        buttonRectC.width = buttonTextureC.width * scale;
+        buttonRectC.height = buttonTextureC.height * scale;
+    }
+
+    if (isMouseOverButtonD)
+    {
+        /* AGRANDAR Y REDUCIR (D) */
+        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
+        buttonRectD.width = buttonTextureD.width * scale;
+        buttonRectD.height = buttonTextureD.height * scale;
+    }
+
+    if (isMouseOverButtonE)
+    {
+        /* AGRANDAR Y REDUCIR (E) */
+        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
+        buttonRectE.width = buttonTextureE.width * scale;
+        buttonRectE.height = buttonTextureE.height * scale;
+    }
+
+    /* AJUSTAR LA POSICION DEL BOTON PARA QUE ESTE EN EL CENTRO */
+    Vector2 buttonPosition = {buttonRectC.x + buttonRectC.width / 2, buttonRectC.y + buttonRectC.height / 2};
+    Vector2 buttonPositionB = {buttonRectD.x + buttonRectD.width / 2, buttonRectD.y + buttonRectD.height / 2};
+    Vector2 buttonPositionC = {buttonRectE.x + buttonRectE.width / 2, buttonRectE.y + buttonRectE.height / 2};
+    DrawTexturePro(buttonTextureC, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureC.width), static_cast<float>(buttonTextureC.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRectC.width, buttonRectC.height}, (Vector2){buttonRectC.width / 2, buttonRectC.height / 2}, 0.0f, WHITE);
+    DrawTexturePro(buttonTextureD, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureD.width), static_cast<float>(buttonTextureD.height)}, (Rectangle){buttonPositionB.x, buttonPositionB.y, buttonRectD.width, buttonRectD.height}, (Vector2){buttonRectD.width / 2, buttonRectD.height / 2}, 0.0f, WHITE);
+    DrawTexturePro(buttonTextureE, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureE.width), static_cast<float>(buttonTextureE.height)}, (Rectangle){buttonPositionC.x, buttonPositionC.y, buttonRectE.width, buttonRectE.height}, (Vector2){buttonRectE.width / 2, buttonRectE.height / 2}, 0.0f, WHITE);
 }
 
 /* --------------------------------------------------------------------------------------------------- */
