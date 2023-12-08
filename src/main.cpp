@@ -6,10 +6,14 @@ typedef enum GameScreen
 {
     INICIO = 0,
     JUGAR,
+<<<<<<< HEAD
     CREDITOS,
     BASICOS,
     LETRAS,
     COLORES
+=======
+    CREDITOS
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
 } GameScreen;
 
 // SACAR LA RESOLUCION DEL MONITOR
@@ -26,6 +30,7 @@ Texture2D backgroundTextureD;
 Texture2D backgroundTextureE;
 // SONIDO DEL BOTON
 Sound buttonSound;
+<<<<<<< HEAD
 // BOTONES
 // Pantalla Inicio
 Texture2D buttonTextureA;
@@ -48,6 +53,18 @@ void drawbasicos();
 void drawletras();
 void drawcolores();
 // EXTRAS
+=======
+Texture2D buttonTextureA;
+Texture2D buttonTextureB;
+Music musica_fondo;
+
+void LoadContent();
+void UnloadContent();
+int drawinicio();
+void drawjugar();
+void drawopciones();
+void drawcreditos();
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
 void menudraw(GameScreen currentScreen);
 void ToggleFullscreenAndResize();
 bool musica(bool musicToggle, bool musicPaused);
@@ -57,7 +74,13 @@ bool musica(bool musicToggle, bool musicPaused);
 /* --------------------------------------------------------------------------------------------------- */
 int main(void)
 {
+<<<<<<< HEAD
     /* INICIALIZACION */
+=======
+    // Initialization
+    //--------------------------------------------------------------------------------------
+
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
     InitWindow(screenWidth, screenHeight, "SIGN MATCH - GAME");
     InitAudioDevice();
 
@@ -65,7 +88,11 @@ int main(void)
 
     /* INICIALIZAR TODAS LAS VARIABLES REQUERIDAS PARA CARGAR LOS DATOS AQUI */
     LoadContent();
+<<<<<<< HEAD
     SetTargetFPS(60); // FRAMES POR SEGUNDO
+=======
+    SetTargetFPS(60); // Set desired framerate (frames-per-second)
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
     bool musicPaused = false;
     bool musicToggle = false;
 
@@ -78,15 +105,27 @@ int main(void)
     /* ----------------------------------------------------------------------------------------------- */
     while (!WindowShouldClose()) // DETECTAR QUE SE CIERRA EL PROGRAMA CON LA TECLA (ESC)
     {
+<<<<<<< HEAD
         ToggleFullscreenAndResize(); // MANEJAR CAMBIOS DE PANTALLA COMPLETA Y TAMAÑO DE VENTANA
 
         int buttonClicked = drawinicio();
         int buttonClicked2 = drawjugar();
 
+=======
+        // Update
+        //----------------------------------------------------------------------------------
+        ToggleFullscreenAndResize(); // Manejar cambios de pantalla completa y tamaño de ventana
+
+        int buttonClicked = drawinicio();
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
         switch (currentScreen)
         {
         case INICIO: // AQUI EN ESTA OPCION ESTARA EL MENU.
         {
+<<<<<<< HEAD
+=======
+
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
             if (buttonClicked == 1)
             {
                 PlaySound(buttonSound);
@@ -99,12 +138,17 @@ int main(void)
             }
             if (IsKeyPressed(KEY_M))
             {
+<<<<<<< HEAD
                 musicToggle = !musicToggle; // CAMBIAR EL ESTADO DE LA MUSICA CON LA TECLA (M)
+=======
+                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
                 musicPaused = musica(musicToggle, musicPaused);
             }
         }
         break;
         case JUGAR:
+<<<<<<< HEAD
         {   
             if (buttonClicked2 == 1)
             {
@@ -121,6 +165,9 @@ int main(void)
                 PlaySound(buttonSound);
                 currentScreen = COLORES;
             }
+=======
+        {
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
             if (IsKeyPressed(KEY_DELETE))
             {
                 PlaySound(buttonSound);
@@ -186,6 +233,7 @@ int main(void)
 
 void LoadContent()
 {
+<<<<<<< HEAD
     /* CARGAR LA TEXTURA DE FONDO EN EL MAIN */
     // 07/12/23 Cambio de imagen de fondo con doble de resolucion (3960 x 2160)
     // Pantalla Inicio
@@ -208,6 +256,39 @@ void LoadContent()
     buttonSound = LoadSound("audio/resources/buttonsound.wav");
     musica_fondo = LoadMusicStream("audio/resources/fondo.mp3");
     SetMusicVolume(musica_fondo, 1.0f);
+=======
+    // Cargar la textura de fondo en el main
+    backgroundTexture = LoadTexture("resources/fullback.png");
+    // Ajustar el tamaño de las imágenes según la resolución de la pantalla
+    buttonTextureA = LoadTexture("resources/SM_BOTON.png");
+    buttonTextureB = LoadTexture("resources/SM_BOTONcred.png");
+    buttonSound = LoadSound("audio/resources/buttonsound.wav");
+    musica_fondo = LoadMusicStream("audio/resources/fondo.mp3");
+    SetMusicVolume(musica_fondo, 1.0f);
+}
+
+bool musica(bool musicToggle, bool musicPaused)
+{
+    if (musicToggle)
+    {
+        // Si musicToggle es true, pausar la música si no está pausada
+        if (!musicPaused)
+        {
+            PauseMusicStream(musica_fondo);
+            musicPaused = true;
+        }
+    }
+    else
+    {
+        // Si musicToggle es false, reanudar la música si está pausada
+        if (musicPaused)
+        {
+            ResumeMusicStream(musica_fondo);
+            musicPaused = false;
+        }
+    }
+    return musicPaused;
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
 }
 
 /* --------------------------------------------------------------------------------------------------- */
@@ -246,6 +327,7 @@ void UnloadContent()
     UnloadTexture(backgroundTextureB);
     // BOTONES
     UnloadSound(buttonSound);
+<<<<<<< HEAD
     // Pantalla Inicio
     UnloadTexture(buttonTextureA);
     UnloadTexture(buttonTextureB);
@@ -255,6 +337,78 @@ void UnloadContent()
     UnloadTexture(buttonTextureE);
     // MUSICA
     UnloadMusicStream(musica_fondo);
+=======
+    UnloadTexture(buttonTextureA);
+    UnloadTexture(buttonTextureB);
+    UnloadMusicStream(musica_fondo);
+}
+
+int drawinicio()
+{
+    DrawTexturePro(
+        backgroundTexture,
+        (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
+
+    // Dibujar los botones
+    Rectangle buttonRectA = {585.0f, 320.0, (float)buttonTextureA.width, (float)buttonTextureA.height};
+    Rectangle buttonRectB = {585.0f, 420.0f, (float)buttonTextureB.width, (float)buttonTextureB.height};
+
+    // Verificar si el mouse está sobre los botones
+    bool isMouseOverButtonA = CheckCollisionPointRec(GetMousePosition(), buttonRectA);
+    bool isMouseOverButtonB = CheckCollisionPointRec(GetMousePosition(), buttonRectB);
+
+    // Cambiar el tamaño del botón A si el mouse está sobre él
+    if (isMouseOverButtonA)
+    {
+        // Agrandar y reducir el botón A en un bucle
+        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
+        buttonRectA.width = buttonTextureA.width * scale;
+        buttonRectA.height = buttonTextureA.height * scale;
+    }
+
+    if (isMouseOverButtonB)
+    {
+        // Agrandar y reducir el botón B en un bucle
+        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
+        buttonRectB.width = buttonTextureB.width * scale;
+        buttonRectB.height = buttonTextureB.height * scale;
+    }
+
+    // Ajustar la posición del botón para que sea el centro del botón
+    Vector2 buttonPosition = {buttonRectA.x + buttonRectA.width / 2, buttonRectA.y + buttonRectA.height / 2};
+    Vector2 buttonPositionB = {buttonRectB.x + buttonRectB.width / 2, buttonRectB.y + buttonRectB.height / 2};
+    DrawTexturePro(buttonTextureA, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureA.width), static_cast<float>(buttonTextureA.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRectA.width, buttonRectA.height}, (Vector2){buttonRectA.width / 2, buttonRectA.height / 2}, 0.0f, WHITE);
+    DrawTexturePro(buttonTextureB, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureB.width), static_cast<float>(buttonTextureB.height)}, (Rectangle){buttonPositionB.x, buttonPositionB.y, buttonRectB.width, buttonRectB.height}, (Vector2){buttonRectB.width / 2, buttonRectB.height / 2}, 0.0f, WHITE);
+
+    // Verificar si se hizo clic en algún botón
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        if (isMouseOverButtonA)
+            return 1; // Botón A clickeado
+        if (isMouseOverButtonB)
+            return 2; // Botón B clickeado
+    }
+
+    return 0; // Ningún botón
+}
+
+void drawjugar()
+{
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), GREEN);
+    DrawText("JUGAR SCREEN", 20, 20, 40, DARKGREEN);
+    DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKGREEN);
+}
+
+void drawcreditos()
+{
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
+    DrawText("CREDITOS SCREEN", 20, 20, 40, DARKBLUE);
+    DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKBLUE);
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
 }
 
 /* --------------------------------------------------------------------------------------------------- */
@@ -454,6 +608,7 @@ void menudraw(GameScreen currentScreen)
         break;
     case CREDITOS:
         drawcreditos();
+<<<<<<< HEAD
         break;
     case BASICOS:
         drawbasicos();
@@ -463,6 +618,8 @@ void menudraw(GameScreen currentScreen)
         break;
     case COLORES:
         drawcolores();
+=======
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
         break;
     default:
         break;
@@ -471,16 +628,26 @@ void menudraw(GameScreen currentScreen)
     EndDrawing();
 }
 
+<<<<<<< HEAD
 /* --------------------------------------------------------------------------------------------------- */
 
+=======
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
 void ToggleFullscreenAndResize()
 {
     if (IsKeyPressed(KEY_F))
     {
+<<<<<<< HEAD
         /* CAMBIAR LA PANTALLA COMPLETA AL PRESIONAR (F11) */
         ToggleFullscreen();
 
         /* AJUSTAR EL TAMAÑO DE LA PANTALLA AL CAMBIARLO A FULLSCREEN */
+=======
+        // Cambiar a pantalla completa al presionar F11
+        ToggleFullscreen();
+
+        // Ajustar el tamaño de la ventana al cambiar a pantalla completa
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
         if (IsWindowFullscreen())
         {
             screenWidth = GetMonitorWidth(0);
@@ -488,12 +655,20 @@ void ToggleFullscreenAndResize()
         }
         else
         {
+<<<<<<< HEAD
             /* RESTAURAR LA RESOLUCION AL SALIR DE LA PANTALLA COMPLETA */
+=======
+            // Restaurar la resolución original al salir de pantalla completa
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
             screenWidth = GetMonitorWidth(0);
             screenHeight = GetMonitorHeight(0);
         }
 
+<<<<<<< HEAD
         /* CAMBIAR EL TAMAÑO DE LA VENTANA */
+=======
+        // Cambiar el tamaño de la ventana
+>>>>>>> 81d80953873cea8fc1dfa8a805c5e1c403f7c793
         SetWindowSize(screenWidth, screenHeight);
     }
 }
