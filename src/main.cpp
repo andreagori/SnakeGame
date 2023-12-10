@@ -29,6 +29,10 @@ typedef struct cargas
     Sound buttonSound;
     Texture2D buttonTextureA;
     Texture2D buttonTextureB;
+    Texture2D buttonTextureC;
+    Texture2D buttonTextureD;
+    Texture2D buttonTextureE;
+    Texture2D buttonTexture1;
     Music musica_fondo;
 } cargas;
 
@@ -36,14 +40,14 @@ typedef struct cargas
 int screenWidth = GetMonitorWidth(0);
 int screenHeight = GetMonitorHeight(0);
 
-cargas LoadContent(char pantalla[]);
-void UnloadContent(cargas archivos);
+cargas LoadContent(const char pantalla[], cargas archivos);
+void UnloadContent(cargas archivos, GameScreen currentScreen);
 int drawinicio(cargas archivos);
-void drawjugar();
+int drawjugar(GameScreen currentScreen, cargas archivos);
 void drawcreditos();
 void menudraw(GameScreen currentScreen, cargas archivos);
 void ToggleFullscreenAndResize();
-bool musica(bool musicToggle, bool musicPaused, Music musica_fondo);
+bool musica(bool musicToggle, bool &musicPaused, Music &musica_fondo);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -57,8 +61,11 @@ int main(void)
     InitAudioDevice();
 
     GameScreen currentScreen = INICIO;
-
-    cargas archivos = LoadContent("MENU");
+    GameScreen nextScreen = INICIO;
+    cargas archivos;
+    archivos.buttonSound = LoadSound("audio/resources/buttonsound.wav");
+    archivos.musica_fondo = LoadMusicStream("audio/resources/fondo.mp3");
+    archivos = LoadContent("MENU", archivos);
 
     SetTargetFPS(60); // Set desired framerate (frames-per-second)
     bool musicPaused = false;
@@ -67,7 +74,6 @@ int main(void)
     Image icon = LoadImage("resources/SG_ICONO.png");
     SetWindowIcon(icon);
     PlayMusicStream(archivos.musica_fondo);
-
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -82,10 +88,17 @@ int main(void)
         {
         case INICIO: // AQUI EN ESTA OPCION ESTARA EL MENU.
         {
+            if (!musicPaused) // Only resume the music if it's not supposed to be paused
+            {
+                ResumeMusicStream(archivos.musica_fondo);
+            }
             if (buttonClicked == 1)
             {
                 PlaySound(archivos.buttonSound);
                 currentScreen = JUGAR;
+                PauseMusicStream(archivos.musica_fondo);
+                UnloadContent(archivos, INICIO);
+                archivos = LoadContent("JUGAR", archivos);
             }
             if (buttonClicked == 2)
             {
@@ -94,17 +107,45 @@ int main(void)
             }
             if (IsKeyPressed(KEY_M))
             {
-                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
+                musicToggle = !musicToggle;
                 musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
             }
         }
         break;
         case JUGAR:
         {
+            if (!musicPaused) // Only resume the music if it's not supposed to be paused
+            {
+                ResumeMusicStream(archivos.musica_fondo);
+            }
+
+            if (buttonClicked == 1)
+            {
+                PlaySound(archivos.buttonSound);
+                currentScreen = JUGAR_BASICO;
+            }
+            if (buttonClicked == 2)
+            {
+                PlaySound(archivos.buttonSound);
+                currentScreen = JUGAR_LETRAS;
+            }
+            if (buttonClicked == 3)
+            {
+                PlaySound(archivos.buttonSound);
+                currentScreen = JUGAR_COLORES;
+            }
             if (IsKeyPressed(KEY_DELETE))
             {
                 PlaySound(archivos.buttonSound);
-                currentScreen = INICIO;
+                currentScreen = nextScreen;
+                PauseMusicStream(archivos.musica_fondo);
+                UnloadContent(archivos, JUGAR);
+                archivos = LoadContent("MENU", archivos);
+            }
+            if (IsKeyPressed(KEY_M))
+            {
+                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
+                musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
             }
         }
         break;
@@ -127,7 +168,7 @@ int main(void)
     }
 
     // TODO: Unload all loaded data (textures, fonts, audio) here!
-    UnloadContent(archivos);
+    UnloadContent(archivos, currentScreen);
     UnloadImage(icon);
 
     CloseWindow(); // Close window and OpenGL context
@@ -136,33 +177,63 @@ int main(void)
     return 0;
 }
 
-cargas LoadContent(char pantalla[])
+bool musica(bool musicToggle, bool &musicPaused, Music &musica_fondo)
 {
-    cargas archivos;
+    if (musicToggle)
+    {
+        if (IsMusicStreamPlaying(musica_fondo))
+        {
+            PauseMusicStream(musica_fondo);
+            musicPaused = true;
+        }
+        else
+        {
+            ResumeMusicStream(musica_fondo);
+            musicPaused = false;
+        }
+    }
 
+    return musicPaused;
+}
+
+cargas LoadContent(const char pantalla[], cargas archivos)
+{
     // Cargar texturas según el nombre de la pantalla
     if (strcmp(pantalla, "MENU") == 0)
     {
         archivos.backgroundTexture = LoadTexture("resources/fullback.png");
         archivos.buttonTextureA = LoadTexture("resources/SM_BotonJugar_1.png");
         archivos.buttonTextureB = LoadTexture("resources/SM_BotonCreditos.png");
-        archivos.buttonSound = LoadSound("audio/resources/buttonsound.wav");
-        archivos.musica_fondo = LoadMusicStream("audio/resources/fondo.mp3");
         SetMusicVolume(archivos.musica_fondo, 1.0f);
+    }
+    if (strcmp(pantalla, "JUGAR") == 0)
+    {
+        archivos.backgroundTexture = LoadTexture("resources/SM_PantallaJugar.png");
+        archivos.buttonTextureC = LoadTexture("resources/SM_BotonBasicos.png");
+        archivos.buttonTextureD = LoadTexture("resources/SM_BotonLetras.png");
+        archivos.buttonTextureE = LoadTexture("resources/SM_BotonColores.png");
     }
     // Agrega más condiciones para otras pantallas
 
     return archivos;
 }
 
-void UnloadContent(cargas archivos)
+void UnloadContent(cargas archivos, GameScreen currentScreen)
 {
     // Descargar texturas
-    UnloadTexture(archivos.backgroundTexture);
-    UnloadSound(archivos.buttonSound);
-    UnloadTexture(archivos.buttonTextureA);
-    UnloadTexture(archivos.buttonTextureB);
-    UnloadMusicStream(archivos.musica_fondo);
+    if (currentScreen == INICIO)
+    {
+        UnloadTexture(archivos.backgroundTexture);
+        UnloadTexture(archivos.buttonTextureA);
+        UnloadTexture(archivos.buttonTextureB);
+    }
+    if (currentScreen == JUGAR)
+    {
+        UnloadTexture(archivos.backgroundTexture);
+        UnloadTexture(archivos.buttonTextureC);
+        UnloadTexture(archivos.buttonTextureD);
+        UnloadTexture(archivos.buttonTextureE);
+    }
 }
 
 int drawinicio(cargas archivos)
@@ -222,12 +293,87 @@ int drawinicio(cargas archivos)
     return 0; // Ningún botón
 }
 
-void drawjugar()
+int jugar_basico(cargas archivos)
+{
+    return 0;
+}
+
+int jugar_letras(cargas archivos)
+{
+    return 0;
+}
+
+int jugar_colores(cargas archivos)
+{
+    return 0;
+}
+
+int drawjugar(GameScreen currentScreen, cargas archivos)
 {
     // Resto del código de la función drawjugar...
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), GREEN);
-    DrawText("JUGAR SCREEN", 20, 20, 40, DARKGREEN);
-    DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKGREEN);
+
+    DrawTexturePro(
+        archivos.backgroundTexture,
+        (Rectangle){0, 0, (float)archivos.backgroundTexture.width, (float)archivos.backgroundTexture.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
+
+    Rectangle buttonRectC = {(GetScreenWidth() - archivos.buttonTextureC.width) / 2, 400.0f, (float)archivos.buttonTextureC.width, (float)archivos.buttonTextureC.height};
+    Rectangle buttonRectD = {(GetScreenWidth() - archivos.buttonTextureD.width) / 2, 580.0f, (float)archivos.buttonTextureD.width, (float)archivos.buttonTextureD.height};
+    Rectangle buttonRectE = {(GetScreenWidth() - archivos.buttonTextureE.width) / 2, 760.0f, (float)archivos.buttonTextureE.width, (float)archivos.buttonTextureE.height};
+
+    /* VERIFICAR SI EL MOUSE ESTA SOBRE LOS BOTONES */
+    bool isMouseOverButtonC = CheckCollisionPointRec(GetMousePosition(), buttonRectC);
+    bool isMouseOverButtonD = CheckCollisionPointRec(GetMousePosition(), buttonRectD);
+    bool isMouseOverButtonE = CheckCollisionPointRec(GetMousePosition(), buttonRectE);
+
+    /* CAMBIAR EL TAMAÑO DEL BOTON (C,D,E) SI EL MOUSE ESTA SOBRE DE EL */
+    if (isMouseOverButtonC)
+    {
+        /* AGRANDAR Y REDUCIR (C) */
+        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
+        buttonRectC.width = archivos.buttonTextureC.width * scale;
+        buttonRectC.height = archivos.buttonTextureC.height * scale;
+    }
+
+    if (isMouseOverButtonD)
+    {
+        /* AGRANDAR Y REDUCIR (D) */
+        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
+        buttonRectD.width = archivos.buttonTextureD.width * scale;
+        buttonRectD.height = archivos.buttonTextureD.height * scale;
+    }
+
+    if (isMouseOverButtonE)
+    {
+        /* AGRANDAR Y REDUCIR (E) */
+        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
+        buttonRectE.width = archivos.buttonTextureE.width * scale;
+        buttonRectE.height = archivos.buttonTextureE.height * scale;
+    }
+
+    /* AJUSTAR LA POSICION DEL BOTON PARA QUE ESTE EN EL CENTRO */
+    Vector2 buttonPosition = {buttonRectC.x + buttonRectC.width / 2, buttonRectC.y + buttonRectE.height / 2};
+    Vector2 buttonPositionD = {buttonRectD.x + buttonRectD.width / 2, buttonRectD.y + buttonRectD.height / 2};
+    Vector2 buttonPositionE = {buttonRectE.x + buttonRectE.width / 2, buttonRectE.y + buttonRectE.height / 2};
+    DrawTexturePro(archivos.buttonTextureC, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTextureC.width), static_cast<float>(archivos.buttonTextureC.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRectC.width, buttonRectC.height}, (Vector2){buttonRectC.width / 2, buttonRectC.height / 2}, 0.0f, WHITE);
+    DrawTexturePro(archivos.buttonTextureD, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTextureD.width), static_cast<float>(archivos.buttonTextureD.height)}, (Rectangle){buttonPositionD.x, buttonPositionD.y, buttonRectD.width, buttonRectD.height}, (Vector2){buttonRectD.width / 2, buttonRectD.height / 2}, 0.0f, WHITE);
+    DrawTexturePro(archivos.buttonTextureE, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTextureE.width), static_cast<float>(archivos.buttonTextureE.height)}, (Rectangle){buttonPositionE.x, buttonPositionE.y, buttonRectE.width, buttonRectE.height}, (Vector2){buttonRectE.width / 2, buttonRectE.height / 2}, 0.0f, WHITE);
+
+    /* VERIFICAR SI SE HIZO CLICK EN EL BOTON */
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        if (isMouseOverButtonC)
+            return 1; // Botón C clickeado
+        if (isMouseOverButtonD)
+            return 2; // Botón D clickeado
+        if (isMouseOverButtonE)
+            return 3; // Botón D clickeado
+    }
+
+    return 0; // Ningún botón
 }
 
 void drawcreditos()
@@ -248,11 +394,26 @@ void menudraw(GameScreen currentScreen, cargas archivos)
         drawinicio(archivos);
         break;
     case JUGAR:
-        drawjugar();
+        drawjugar(currentScreen, archivos);
         break;
     case CREDITOS:
         drawcreditos();
         break;
+    case JUGAR_BASICO:
+    {
+        jugar_basico(archivos);
+        break;
+    }
+    case JUGAR_LETRAS:
+    {
+        jugar_letras(archivos);
+        break;
+    }
+    case JUGAR_COLORES:
+    {
+        jugar_colores(archivos);
+        break;
+    }
     default:
         break;
     }
@@ -284,30 +445,6 @@ void ToggleFullscreenAndResize()
         // Cambiar el tamaño de la ventana
         SetWindowSize(screenWidth, screenHeight);
     }
-}
-
-bool musica(bool musicToggle, bool musicPaused, Music musica_fondo)
-{
-    if (musicToggle)
-    {
-        // Si musicToggle es true, pausar la música si no está pausada
-        if (!musicPaused)
-        {
-            PauseMusicStream(musica_fondo);
-            musicPaused = true;
-        }
-    }
-    else
-    {
-        // Si musicToggle es false, reanudar la música si está pausada
-        if (musicPaused)
-        {
-            ResumeMusicStream(musica_fondo);
-            musicPaused = false;
-        }
-    }
-
-    return musicPaused;
 }
 
 // CODIGO DE TERE PARA REFERENCIA:
