@@ -35,7 +35,10 @@ typedef struct cargas
     Texture2D backgroundTexture_creditos;
     Texture2D backgroundTexture_basico;
     Texture2D backgroundTexture_letras;
+<<<<<<< HEAD
     Texture2D backgroundTexture_colores;
+=======
+>>>>>>> afc022c8488d6d5ddd24e645fc101f8bb5bfe639
     Sound buttonSound;
     Texture2D buttonTextureA;
     Texture2D buttonTextureB;
@@ -56,7 +59,10 @@ int drawinicio(cargas archivos);
 int drawjugar(GameScreen currentScreen, cargas archivos);
 JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos);
 JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos);
+<<<<<<< HEAD
 JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos);
+=======
+>>>>>>> afc022c8488d6d5ddd24e645fc101f8bb5bfe639
 void drawcreditos(cargas archivos);
 void menudraw(GameScreen currentScreen, cargas archivos);
 void ToggleFullscreenAndResize();
@@ -197,6 +203,7 @@ int main(void)
             }
             break;
         }
+<<<<<<< HEAD
         case JUGAR_COLORES:
         {
             JuegoEstado estadoJuego = jugar_colores(currentScreen, archivos);
@@ -215,6 +222,8 @@ int main(void)
             }
             break;
         }
+=======
+>>>>>>> afc022c8488d6d5ddd24e645fc101f8bb5bfe639
         case CREDITOS:
         {
 
@@ -312,12 +321,15 @@ cargas LoadContent(const char pantalla[], cargas archivos)
         archivos.backgroundTexture_letras = LoadTexture("resources/SM_PantallaLetras.png");
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
+<<<<<<< HEAD
 
     if (strcmp(pantalla, "JUGAR_COLORES") == 0)
     {
         archivos.backgroundTexture_colores = LoadTexture("resources/SM_PantallaColores.png");
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
+=======
+>>>>>>> afc022c8488d6d5ddd24e645fc101f8bb5bfe639
     // Agrega más condiciones para otras pantallas
 
     return archivos;
@@ -355,12 +367,15 @@ void UnloadContent(cargas archivos, GameScreen currentScreen)
         UnloadTexture(archivos.backgroundTexture_letras);
         // UnloadTexture(archivos.buttonTexture1);
     }
+<<<<<<< HEAD
 
     if (currentScreen == JUGAR_COLORES)
     {
         UnloadTexture(archivos.backgroundTexture_colores);
         // UnloadTexture(archivos.buttonTexture1);
     }
+=======
+>>>>>>> afc022c8488d6d5ddd24e645fc101f8bb5bfe639
 }
 
 int drawinicio(cargas archivos)

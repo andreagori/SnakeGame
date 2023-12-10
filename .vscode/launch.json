@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/andyt/Desktop/signmatch-game/src",
-      "program": "c:/Users/andyt/Desktop/signmatch-game/src/build/Debug/outDebug",
+      "cwd": "c:/Users/andyt/Documents/GitHub/signmatchgame/src",
+      "program": "c:/Users/andyt/Documents/GitHub/signmatchgame/src/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
