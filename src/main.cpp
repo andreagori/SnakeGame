@@ -13,6 +13,12 @@ typedef enum jugarscreen
     COLORES,
 } jugarscreen;
 
+typedef enum JuegoEstado
+{
+    JUEGO_JUGANDO,
+    JUEGO_REGRESAR_MENU,
+} JuegoEstado;
+
 typedef enum GameScreen
 {
     INICIO = 0,
@@ -26,6 +32,9 @@ typedef enum GameScreen
 typedef struct cargas
 {
     Texture2D backgroundTexture;
+    Texture2D backgroundTexture_creditos;
+    Texture2D backgroundTexture_basico;
+    Texture2D backgroundTexture_letras;
     Sound buttonSound;
     Texture2D buttonTextureA;
     Texture2D buttonTextureB;
@@ -44,7 +53,9 @@ cargas LoadContent(const char pantalla[], cargas archivos);
 void UnloadContent(cargas archivos, GameScreen currentScreen);
 int drawinicio(cargas archivos);
 int drawjugar(GameScreen currentScreen, cargas archivos);
-void drawcreditos();
+JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos);
+JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos);
+void drawcreditos(cargas archivos);
 void menudraw(GameScreen currentScreen, cargas archivos);
 void ToggleFullscreenAndResize();
 bool musica(bool musicToggle, bool &musicPaused, Music &musica_fondo);
@@ -88,15 +99,10 @@ int main(void)
         {
         case INICIO: // AQUI EN ESTA OPCION ESTARA EL MENU.
         {
-            if (!musicPaused) // Only resume the music if it's not supposed to be paused
-            {
-                ResumeMusicStream(archivos.musica_fondo);
-            }
             if (buttonClicked == 1)
             {
                 PlaySound(archivos.buttonSound);
                 currentScreen = JUGAR;
-                PauseMusicStream(archivos.musica_fondo);
                 UnloadContent(archivos, INICIO);
                 archivos = LoadContent("JUGAR", archivos);
             }
@@ -104,6 +110,8 @@ int main(void)
             {
                 PlaySound(archivos.buttonSound);
                 currentScreen = CREDITOS;
+                UnloadContent(archivos, INICIO);
+                archivos = LoadContent("CREDITOS", archivos);
             }
             if (IsKeyPressed(KEY_M))
             {
@@ -114,20 +122,18 @@ int main(void)
         break;
         case JUGAR:
         {
-            if (!musicPaused) // Only resume the music if it's not supposed to be paused
-            {
-                ResumeMusicStream(archivos.musica_fondo);
-            }
 
             if (buttonClicked == 1)
             {
                 PlaySound(archivos.buttonSound);
                 currentScreen = JUGAR_BASICO;
+                archivos = LoadContent("JUGAR_BASICO", archivos);
             }
             if (buttonClicked == 2)
             {
                 PlaySound(archivos.buttonSound);
                 currentScreen = JUGAR_LETRAS;
+                archivos = LoadContent("JUGAR_LETRAS", archivos);
             }
             if (buttonClicked == 3)
             {
@@ -138,7 +144,6 @@ int main(void)
             {
                 PlaySound(archivos.buttonSound);
                 currentScreen = nextScreen;
-                PauseMusicStream(archivos.musica_fondo);
                 UnloadContent(archivos, JUGAR);
                 archivos = LoadContent("MENU", archivos);
             }
@@ -149,12 +154,65 @@ int main(void)
             }
         }
         break;
+        case JUGAR_BASICO:
+        {
+            // Llama a la función jugar_basico y obtén el estado del juego
+            JuegoEstado estadoJuego = jugar_basico(currentScreen, archivos);
+
+            // Verifica el estado del juego
+            if (estadoJuego == JUEGO_REGRESAR_MENU)
+            {
+                // Regresa al menú
+                PlaySound(archivos.buttonSound);
+                currentScreen = JUGAR;
+                UnloadContent(archivos, JUGAR_BASICO);
+                archivos = LoadContent("JUEGO", archivos);
+            }
+            if (IsKeyPressed(KEY_M))
+            {
+                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
+                musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
+            }
+            break;
+        }
+        case JUGAR_LETRAS:
+        {
+            JuegoEstado estadoJuego = jugar_letras(currentScreen, archivos);
+            if (estadoJuego == JUEGO_REGRESAR_MENU)
+            {
+                // Regresa al menú
+                PlaySound(archivos.buttonSound);
+                currentScreen = JUGAR;
+                UnloadContent(archivos, JUGAR_LETRAS);
+                archivos = LoadContent("JUEGO", archivos);
+            }
+            if (IsKeyPressed(KEY_M))
+            {
+                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
+                musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
+            }
+            break;
+        }
         case CREDITOS:
         {
+
+            if (!musicPaused) // Only resume the music if it's not supposed to be paused
+            {
+                ResumeMusicStream(archivos.musica_fondo);
+            }
+
             if (IsKeyPressed(KEY_DELETE))
             {
                 PlaySound(archivos.buttonSound);
-                currentScreen = INICIO;
+                currentScreen = nextScreen;
+                UnloadContent(archivos, CREDITOS);
+                archivos = LoadContent("MENU", archivos);
+            }
+
+            if (IsKeyPressed(KEY_M))
+            {
+                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
+                musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
             }
         }
         break;
@@ -169,6 +227,8 @@ int main(void)
 
     // TODO: Unload all loaded data (textures, fonts, audio) here!
     UnloadContent(archivos, currentScreen);
+    UnloadSound(archivos.buttonSound);
+    UnloadMusicStream(archivos.musica_fondo);
     UnloadImage(icon);
 
     CloseWindow(); // Close window and OpenGL context
@@ -201,7 +261,7 @@ cargas LoadContent(const char pantalla[], cargas archivos)
     // Cargar texturas según el nombre de la pantalla
     if (strcmp(pantalla, "MENU") == 0)
     {
-        archivos.backgroundTexture = LoadTexture("resources/fullback.png");
+        archivos.backgroundTexture = LoadTexture("resources/SM_Pantalla.png");
         archivos.buttonTextureA = LoadTexture("resources/SM_BotonJugar_1.png");
         archivos.buttonTextureB = LoadTexture("resources/SM_BotonCreditos.png");
         SetMusicVolume(archivos.musica_fondo, 1.0f);
@@ -212,6 +272,23 @@ cargas LoadContent(const char pantalla[], cargas archivos)
         archivos.buttonTextureC = LoadTexture("resources/SM_BotonBasicos.png");
         archivos.buttonTextureD = LoadTexture("resources/SM_BotonLetras.png");
         archivos.buttonTextureE = LoadTexture("resources/SM_BotonColores.png");
+    }
+
+    if (strcmp(pantalla, "CREDITOS") == 0)
+    {
+        archivos.backgroundTexture_creditos = LoadTexture("resources/SM_PantallaCreditos.png");
+    }
+
+    if (strcmp(pantalla, "JUGAR_BASICO") == 0)
+    {
+        archivos.backgroundTexture_basico = LoadTexture("resources/SM_PantallaBasicos.png");
+        // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
+    }
+
+    if (strcmp(pantalla, "JUGAR_LETRAS") == 0)
+    {
+        archivos.backgroundTexture_letras = LoadTexture("resources/SM_PantallaLetras.png");
+        // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
     // Agrega más condiciones para otras pantallas
 
@@ -233,6 +310,22 @@ void UnloadContent(cargas archivos, GameScreen currentScreen)
         UnloadTexture(archivos.buttonTextureC);
         UnloadTexture(archivos.buttonTextureD);
         UnloadTexture(archivos.buttonTextureE);
+    }
+    if (currentScreen == CREDITOS)
+    {
+        UnloadTexture(archivos.backgroundTexture_creditos);
+    }
+
+    if (currentScreen == JUGAR_BASICO)
+    {
+        UnloadTexture(archivos.backgroundTexture_basico);
+        // UnloadTexture(archivos.buttonTexture1);
+    }
+
+    if (currentScreen == JUGAR_LETRAS)
+    {
+        UnloadTexture(archivos.backgroundTexture_letras);
+        // UnloadTexture(archivos.buttonTexture1);
     }
 }
 
@@ -293,14 +386,48 @@ int drawinicio(cargas archivos)
     return 0; // Ningún botón
 }
 
-int jugar_basico(cargas archivos)
+JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos)
 {
-    return 0;
+    DrawTexturePro(
+        archivos.backgroundTexture_basico,
+        (Rectangle){0, 0, (float)archivos.backgroundTexture_basico.width, (float)archivos.backgroundTexture_basico.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
+
+    if (IsKeyPressed(KEY_DELETE))
+    {
+        // Si se presiona DELETE, regresar al menú
+        return JUEGO_REGRESAR_MENU;
+    }
+
+    // Resto del código...
+
+    // Si no hay cambio de pantalla, continúa jugando
+    return JUEGO_JUGANDO;
 }
 
-int jugar_letras(cargas archivos)
+JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos)
 {
-    return 0;
+    DrawTexturePro(
+        archivos.backgroundTexture_letras,
+        (Rectangle){0, 0, (float)archivos.backgroundTexture_letras.width, (float)archivos.backgroundTexture_letras.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
+
+    if (IsKeyPressed(KEY_DELETE))
+    {
+        // Si se presiona DELETE, regresar al menú
+        return JUEGO_REGRESAR_MENU;
+    }
+
+    // Resto del código...
+
+    // Si no hay cambio de pantalla, continúa jugando
+    return JUEGO_JUGANDO;
 }
 
 int jugar_colores(cargas archivos)
@@ -376,11 +503,15 @@ int drawjugar(GameScreen currentScreen, cargas archivos)
     return 0; // Ningún botón
 }
 
-void drawcreditos()
+void drawcreditos(cargas archivos)
 {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), BLUE);
-    DrawText("CREDITOS SCREEN", 20, 20, 40, DARKBLUE);
-    DrawText("PRESS DELETE to RETURN to INICIO SCREEN", 120, 280, 20, DARKBLUE);
+    DrawTexturePro(
+        archivos.backgroundTexture_creditos,
+        (Rectangle){0, 0, (float)archivos.backgroundTexture_creditos.width, (float)archivos.backgroundTexture_creditos.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
 }
 
 void menudraw(GameScreen currentScreen, cargas archivos)
@@ -397,16 +528,16 @@ void menudraw(GameScreen currentScreen, cargas archivos)
         drawjugar(currentScreen, archivos);
         break;
     case CREDITOS:
-        drawcreditos();
+        drawcreditos(archivos);
         break;
     case JUGAR_BASICO:
     {
-        jugar_basico(archivos);
+        jugar_basico(currentScreen, archivos);
         break;
     }
     case JUGAR_LETRAS:
     {
-        jugar_letras(archivos);
+        jugar_letras(currentScreen, archivos);
         break;
     }
     case JUGAR_COLORES:
