@@ -75,6 +75,7 @@ typedef struct memorama
     int cardsMatched;
     int numRows = 3;
     int numCols = 6;
+    int cardStates[3][6];
     int cards[3][6];
 } memorama;
 
@@ -95,6 +96,8 @@ int drawinicio(cargas archivos);
 int drawjugar(GameScreen currentScreen, cargas archivos);
 void UnloadContent(cargas archivos, GameScreen currentScreen);
 // >> JUEGO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+void inicializarMemorama(memorama &estruct);
+void juego_basico(cartas todo, memorama *estruct);
 cartas LoadCartas_b(const char categoria[], cartas todo);
 cartas UnloadCartas_b(const char categoria[], cartas todo);
 Texture2D GetCartaTexture(cartas todo, int numeroCarta);
@@ -618,21 +621,40 @@ Texture2D GetCartaTexture(cartas todo, int numeroCarta)
         return todo.carta7;
     case 8:
         return todo.carta8;
+    case 9:
+        return todo.carta9;
     // Agrega más casos según la cantidad de cartas que tengas
     default:
         return todo.carta_back; // Textura por defecto (carta oculta)
     }
 }
 
-void juego_basico(cartas todo, memorama estruct)
+void inicializarMemorama(memorama *estruct)
+{
+    int cartaActual = 1;
+
+    // Iterar sobre cada fila y columna
+    for (int row = 0; row < 3; ++row)
+    {
+        for (int col = 0; col < 6; ++col)
+        {
+            // Asignar el valor de la carta actual y avanzar al siguiente
+            estruct->cards[row][col] = cartaActual;
+            estruct->cardStates[row][col] = 0;
+            cartaActual++;
+        }
+    }
+}
+
+void juego_basico(cartas todo, memorama *estruct)
 {
     // Obtener las dimensiones de la ventana
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
 
     // Definir el número de filas y columnas
-    int numRows = estruct.numRows;
-    int numCols = estruct.numCols;
+    int numRows = estruct->numRows;
+    int numCols = estruct->numCols;
 
     // Calcular el espaciado entre las cartas
     float paddingX = 10.0f;
@@ -649,7 +671,6 @@ void juego_basico(cartas todo, memorama estruct)
     float startX = (screenWidth - numCols * (adjustedCardWidth + paddingX) + paddingX) / 2.0f;
     float startY = (screenHeight - numRows * (cardHeight + paddingY) + paddingY) / 2.0f;
 
-    // Iterar sobre cada fila y columna
     for (int row = 0; row < numRows; ++row)
     {
         for (int col = 0; col < numCols; ++col)
@@ -661,11 +682,20 @@ void juego_basico(cartas todo, memorama estruct)
             // Crear un rectángulo para la carta
             Rectangle cardRect = {xPos, yPos, adjustedCardWidth, cardHeight};
 
-            // Establecer el estado inicial de la carta a 0
-            estruct.cards[row][col] = 0;
+            // Verificar si el mouse está sobre la carta
+            bool isMouseOverCard = CheckCollisionPointRec(GetMousePosition(), cardRect);
+
+            // Cambiar el estado de la carta al hacer clic izquierdo si el estado actual es 0
+            if (isMouseOverCard)
+            {
+                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+                {
+                    estruct->cardStates[row][col] = 1 - estruct->cardStates[row][col];
+                }
+            }
 
             // Dibujar la carta
-            if (estruct.cards[row][col] == 0)
+            if (estruct->cardStates[row][col] == 0)
             {
                 // Si la carta está oculta, dibujar la textura de la carta oculta
                 DrawTexturePro(
@@ -676,13 +706,13 @@ void juego_basico(cartas todo, memorama estruct)
                     0.0f,
                     WHITE);
             }
-            // No necesitas un caso para el estado 1 (carta revelada) ya que el estado inicial es 0
             else
             {
-                // Si la carta está revelada, dibujar la textura de la carta revelada
+                // Si la carta está revelada, dibujar la textura de la carta correspondiente
+                int numeroCarta = (row * numCols + col) % (numRows * numCols / 2) + 1; // Asigna números del 1 al (numRows * numCols / 2) a las cartas
                 DrawTexturePro(
-                    GetCartaTexture(todo, estruct.cards[row][col]),
-                    (Rectangle){0, 0, (float)GetCartaTexture(todo, estruct.cards[row][col]).width, (float)GetCartaTexture(todo, estruct.cards[row][col]).height},
+                    GetCartaTexture(todo, numeroCarta),
+                    (Rectangle){0, 0, (float)GetCartaTexture(todo, numeroCarta).width, (float)GetCartaTexture(todo, numeroCarta).height},
                     cardRect,
                     (Vector2){0, 0},
                     0.0f,
@@ -754,8 +784,8 @@ JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo,
     DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
 
     // BOTONES DE CARTAS FINAL -------------------------------------------------
-
-    juego_basico(todo, memo);
+    inicializarMemorama(&memo);
+    juego_basico(todo, &memo);
 
     if (IsKeyPressed(KEY_DELETE))
     {
