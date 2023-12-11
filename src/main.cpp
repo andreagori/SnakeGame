@@ -73,8 +73,8 @@ typedef struct memorama
     bool cardSelected;
     int selectedCardIndex;
     int cardsMatched;
-    int numRows;
-    int numCols;
+    int numRows = 3;
+    int numCols = 6;
     int cards[3][6];
 } memorama;
 
@@ -97,6 +97,7 @@ void UnloadContent(cargas archivos, GameScreen currentScreen);
 // >> JUEGO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 cartas LoadCartas_b(const char categoria[], cartas todo);
 cartas UnloadCartas_b(const char categoria[], cartas todo);
+Texture2D GetCartaTexture(cartas todo, int numeroCarta);
 JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama memo);
 JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos);
 JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos);
@@ -596,37 +597,92 @@ int drawinicio(cargas archivos)
     return 0; // Ningún botón
 }
 
+Texture2D GetCartaTexture(cartas todo, int numeroCarta)
+{
+    // Dependiendo del número de la carta, devuelve la textura correspondiente
+    switch (numeroCarta)
+    {
+    case 1:
+        return todo.carta1;
+    case 2:
+        return todo.carta2;
+    case 3:
+        return todo.carta3;
+    case 4:
+        return todo.carta4;
+    case 5:
+        return todo.carta5;
+    case 6:
+        return todo.carta6;
+    case 7:
+        return todo.carta7;
+    case 8:
+        return todo.carta8;
+    // Agrega más casos según la cantidad de cartas que tengas
+    default:
+        return todo.carta_back; // Textura por defecto (carta oculta)
+    }
+}
+
 void juego_basico(cartas todo, memorama estruct)
 {
-    const int numRows = 3;
-    const int numCols = 6;
-    const float desiredCardWidth = 135.0f;  // Ancho deseado de la carta
-    const float desiredCardHeight = 179.0f; // Altura deseada de la carta
-    const float paddingX = 10.0f;
-    const float paddingY = 10.0f;
+    // Obtener las dimensiones de la ventana
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
 
-    // Calcular el espacio en blanco a los lados y en la parte superior e inferior de la cuadrícula
-    const float totalGridWidth = numCols * desiredCardWidth + (numCols - 1) * paddingX;
-    const float totalGridHeight = numRows * desiredCardHeight + (numRows - 1) * paddingY;
+    // Calcular el tamaño de las cartas y el espaciado
+    float cardWidth = 130.0f;
+    float cardHeight = 179.0f;
+    float paddingX = 10.0f;
+    float paddingY = 10.0f;
 
-    // Ajustar la posición inicial para centrar la cuadrícula en la pantalla
-    const float startX = (GetScreenWidth() - totalGridWidth) / 2.0f + 50.0f;
-    const float startY = (GetScreenHeight() - totalGridHeight) / 2.0f + 120.0f; // Ajusta el valor 100.0f según sea necesario
+    // Calcular el espacio total ocupado por las cartas
+    float totalGridWidth = estruct.numCols * cardWidth + (estruct.numCols - 1) * paddingX;
+    float totalGridHeight = estruct.numRows * cardHeight + (estruct.numRows - 1) * paddingY;
 
-    // Dibujar las 18 cartas traseras en una cuadrícula centrada
-    for (int row = 0; row < numRows; ++row)
+    // Calcular la posición inicial para centrar la cuadrícula en la pantalla
+    float startX = (screenWidth - totalGridWidth) / 2.0f;
+    float startY = (screenHeight - totalGridHeight) / 2.0f;
+
+    // Iterar sobre cada fila y columna
+    for (int row = 0; row < estruct.numRows; ++row)
     {
-        for (int col = 0; col < numCols; ++col)
+        for (int col = 0; col < estruct.numCols; ++col)
         {
-            float xPos = startX + col * (desiredCardWidth + paddingX);
-            float yPos = startY + row * (desiredCardHeight + paddingY);
+            // Calcular la posición de la carta
+            float xPos = startX + col * (cardWidth + paddingX);
+            float yPos = startY + row * (cardHeight + paddingY);
 
-            DrawTexturePro(todo.carta1,
-                           (Rectangle){0, 0, (float)todo.carta1.width, (float)todo.carta1.height},
-                           (Rectangle){xPos, yPos, desiredCardWidth, desiredCardHeight},
-                           (Vector2){desiredCardWidth / 2.0f, desiredCardHeight / 2.0f},
-                           0.0f,
-                           WHITE);
+            // Crear un rectángulo para la carta
+            Rectangle cardRect = {xPos, yPos, cardWidth, cardHeight};
+
+            // Establecer el estado inicial de la carta a 0
+            estruct.cards[row][col] = 0;
+
+            // Dibujar la carta
+            if (estruct.cards[row][col] == 0)
+            {
+                // Si la carta está oculta, dibujar la textura de la carta oculta
+                DrawTexturePro(
+                    todo.carta_back,
+                    (Rectangle){0, 0, (float)todo.carta_back.width, (float)todo.carta_back.height},
+                    cardRect,
+                    (Vector2){0, 0},
+                    0.0f,
+                    WHITE);
+            }
+            // No necesitas un caso para el estado 1 (carta revelada) ya que el estado inicial es 0
+            else
+            {
+                // Si la carta está revelada, dibujar la textura de la carta revelada
+                DrawTexturePro(
+                    GetCartaTexture(todo, estruct.cards[row][col]),
+                    (Rectangle){0, 0, (float)GetCartaTexture(todo, estruct.cards[row][col]).width, (float)GetCartaTexture(todo, estruct.cards[row][col]).height},
+                    cardRect,
+                    (Vector2){0, 0},
+                    0.0f,
+                    WHITE);
+            }
         }
     }
 }
