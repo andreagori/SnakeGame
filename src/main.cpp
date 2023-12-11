@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include <cmath>
+#include <stdio.h>
 #include <string.h>
 
 // TYPEDEF PARA SUBMENUS Y MENUS.
@@ -44,6 +45,9 @@ typedef struct cargas
     Texture2D buttonTextureD;
     Texture2D buttonTextureE;
     Texture2D buttonTexture1;
+    Texture2D buttonTexture2;
+    Texture2D buttonTexture3;
+    Texture2D buttonTexture4;
     Music musica_fondo;
 } cargas;
 
@@ -56,14 +60,13 @@ int screenHeight = GetMonitorHeight(0);
 // PROTOTIPOS DE FUNCIONES ------------------------------
 // >> CARGAS ARCHIVOS Y MENUS.
 cargas LoadContent(const char pantalla[], cargas archivos);
-void UnloadContent(cargas archivos, GameScreen currentScreen);
 void drawcreditos(cargas archivos);
 void menudraw(GameScreen currentScreen, cargas archivos);
 void ToggleFullscreenAndResize();
 bool musica(bool musicToggle, bool &musicPaused, Music &musica_fondo);
 int drawinicio(cargas archivos);
 int drawjugar(GameScreen currentScreen, cargas archivos);
-
+void UnloadContent(cargas archivos, GameScreen currentScreen);
 // >> JUEGO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos);
@@ -123,11 +126,17 @@ int main(void)
                 UnloadContent(archivos, INICIO);
                 archivos = LoadContent("CREDITOS", archivos);
             }
-            if (IsKeyPressed(KEY_M))
+            if (IsKeyPressed(KEY_M) || buttonClicked == 4)
             {
                 // SI SE PRESIONA LA TECLA "M", PAUSAR LA MUSICA.
+                PlaySound(archivos.buttonSound);
                 musicToggle = !musicToggle;
                 musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
+            }
+            if (buttonClicked == 3)
+            {
+                PlaySound(archivos.buttonSound);
+                ToggleFullscreen();
             }
         }
         break;
@@ -256,6 +265,7 @@ int main(void)
 
     // TODO: Unload all loaded data (textures, fonts, audio) here!
     UnloadContent(archivos, currentScreen);
+    UnloadContent(archivos, nextScreen);
     UnloadSound(archivos.buttonSound);
     UnloadMusicStream(archivos.musica_fondo);
     UnloadImage(icon);
@@ -293,6 +303,8 @@ cargas LoadContent(const char pantalla[], cargas archivos)
         archivos.backgroundTexture = LoadTexture("resources/SM_Pantalla.png");
         archivos.buttonTextureA = LoadTexture("resources/SM_BotonJugar_1.png");
         archivos.buttonTextureB = LoadTexture("resources/SM_BotonCreditos.png");
+        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
+        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
         SetMusicVolume(archivos.musica_fondo, 1.0f);
     }
     if (strcmp(pantalla, "JUGAR") == 0)
@@ -301,28 +313,43 @@ cargas LoadContent(const char pantalla[], cargas archivos)
         archivos.buttonTextureC = LoadTexture("resources/SM_BotonBasicos.png");
         archivos.buttonTextureD = LoadTexture("resources/SM_BotonLetras.png");
         archivos.buttonTextureE = LoadTexture("resources/SM_BotonColores.png");
+        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
+        archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
+        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
     }
 
     if (strcmp(pantalla, "CREDITOS") == 0)
     {
         archivos.backgroundTexture_creditos = LoadTexture("resources/SM_PantallaCreditos.png");
+        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
+        archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
+        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
     }
 
     if (strcmp(pantalla, "JUGAR_BASICO") == 0)
     {
         archivos.backgroundTexture_basico = LoadTexture("resources/SM_PantallaBasicos.png");
+        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
+        archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
+        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
 
     if (strcmp(pantalla, "JUGAR_LETRAS") == 0)
     {
         archivos.backgroundTexture_letras = LoadTexture("resources/SM_PantallaLetras.png");
+        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
+        archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
+        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
 
     if (strcmp(pantalla, "JUGAR_COLORES") == 0)
     {
         archivos.backgroundTexture_colores = LoadTexture("resources/SM_PantallaColores.png");
+        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
+        archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
+        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
     // Agrega más condiciones para otras pantallas
@@ -338,6 +365,8 @@ void UnloadContent(cargas archivos, GameScreen currentScreen)
         UnloadTexture(archivos.backgroundTexture);
         UnloadTexture(archivos.buttonTextureA);
         UnloadTexture(archivos.buttonTextureB);
+        UnloadTexture(archivos.buttonTexture2);
+        UnloadTexture(archivos.buttonTexture4);
     }
     if (currentScreen == JUGAR)
     {
@@ -345,27 +374,42 @@ void UnloadContent(cargas archivos, GameScreen currentScreen)
         UnloadTexture(archivos.buttonTextureC);
         UnloadTexture(archivos.buttonTextureD);
         UnloadTexture(archivos.buttonTextureE);
+        UnloadTexture(archivos.buttonTexture2);
+        UnloadTexture(archivos.buttonTexture3);
+        UnloadTexture(archivos.buttonTexture4);
     }
     if (currentScreen == CREDITOS)
     {
         UnloadTexture(archivos.backgroundTexture_creditos);
+        UnloadTexture(archivos.buttonTexture2);
+        UnloadTexture(archivos.buttonTexture3);
+        UnloadTexture(archivos.buttonTexture4);
     }
 
     if (currentScreen == JUGAR_BASICO)
     {
         UnloadTexture(archivos.backgroundTexture_basico);
+        UnloadTexture(archivos.buttonTexture2);
+        UnloadTexture(archivos.buttonTexture3);
+        UnloadTexture(archivos.buttonTexture4);
         // UnloadTexture(archivos.buttonTexture1);
     }
 
     if (currentScreen == JUGAR_LETRAS)
     {
         UnloadTexture(archivos.backgroundTexture_letras);
+        UnloadTexture(archivos.buttonTexture2);
+        UnloadTexture(archivos.buttonTexture3);
+        UnloadTexture(archivos.buttonTexture4);
         // UnloadTexture(archivos.buttonTexture1);
     }
 
     if (currentScreen == JUGAR_COLORES)
     {
         UnloadTexture(archivos.backgroundTexture_colores);
+        UnloadTexture(archivos.buttonTexture2);
+        UnloadTexture(archivos.buttonTexture3);
+        UnloadTexture(archivos.buttonTexture4);
         // UnloadTexture(archivos.buttonTexture1);
     }
 }
@@ -388,9 +432,23 @@ int drawinicio(cargas archivos)
 
     Rectangle buttonRectA = {startX, startY, (float)archivos.buttonTextureA.width, (float)archivos.buttonTextureA.height};
     Rectangle buttonRectB = {bstartX, GetScreenHeight() - archivos.buttonTextureB.height, (float)archivos.buttonTextureB.width, (float)archivos.buttonTextureB.height};
+
+    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
+
+    // Ajustar la posición y de los botones para moverlos a la parte superior de la pantalla
+    float buttonY = 0;
+    // Ajustar la posición x de los botones para moverlos a la derecha de la pantalla
+    float button2X = GetScreenWidth() - 2 * archivos.buttonTexture2.width / 4;
+    float button4X = GetScreenWidth() - archivos.buttonTexture4.width / 4;
+    Rectangle buttonRect2 = {button2X, buttonY, (float)archivos.buttonTexture2.width / 4, (float)archivos.buttonTexture2.height / 4};
+    Rectangle buttonRect4 = {button4X, buttonY, (float)archivos.buttonTexture4.width / 4, (float)archivos.buttonTexture4.height / 4};
+
     /* VERIFICAR SI EL MOUSE ESTÁ SOBRE LOS BOTONES */
     bool isMouseOverButtonA = CheckCollisionPointRec(GetMousePosition(), buttonRectA);
     bool isMouseOverButtonB = CheckCollisionPointRec(GetMousePosition(), buttonRectB);
+    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
+    bool isMouseOverButton2 = CheckCollisionPointRec(GetMousePosition(), buttonRect2);
+    bool isMouseOverButton4 = CheckCollisionPointRec(GetMousePosition(), buttonRect4);
 
     /* CAMBIAR EL TAMAÑO DEL BOTÓN (A, B) SI EL MOUSE ESTÁ SOBRE DE EL */
     if (isMouseOverButtonA)
@@ -408,12 +466,34 @@ int drawinicio(cargas archivos)
         buttonRectB.width = archivos.buttonTextureB.width * scale;
         buttonRectB.height = archivos.buttonTextureB.height * scale;
     }
+    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
+    if (isMouseOverButton2)
+    {
+        /* AGRANDAR Y REDUCIR (2) */
+        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
+        buttonRect2.width = archivos.buttonTexture2.width * scale;
+        buttonRect2.height = archivos.buttonTexture2.height * scale;
+    }
+
+    if (isMouseOverButton4)
+    {
+        /* AGRANDAR Y REDUCIR (4) */
+        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
+        buttonRect4.width = archivos.buttonTexture4.width * scale;
+        buttonRect4.height = archivos.buttonTexture4.height * scale;
+    }
 
     /* AJUSTAR LA POSICIÓN DEL BOTÓN PARA QUE ESTÉ EN EL CENTRO */
     Vector2 buttonPosition = {buttonRectA.x + buttonRectA.width / 2, buttonRectA.y + buttonRectA.height / 2};
     Vector2 buttonPositionB = {buttonRectB.x + buttonRectB.width / 2, buttonRectB.y + buttonRectB.height / 2};
+    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
+    Vector2 buttonPosition2 = {buttonRect2.x + buttonRect2.width / 2, buttonRect2.y + buttonRect2.height / 2};
+    Vector2 buttonPosition4 = {buttonRect4.x + buttonRect4.width / 2, buttonRect4.y + buttonRect4.height / 2};
     DrawTexturePro(archivos.buttonTextureA, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTextureA.width), static_cast<float>(archivos.buttonTextureA.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRectA.width, buttonRectA.height}, (Vector2){buttonRectA.width / 2, buttonRectA.height / 2}, 0.0f, WHITE);
     DrawTexturePro(archivos.buttonTextureB, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTextureB.width), static_cast<float>(archivos.buttonTextureB.height)}, (Rectangle){buttonPositionB.x, buttonPositionB.y, buttonRectB.width, buttonRectB.height}, (Vector2){buttonRectB.width / 2, buttonRectB.height / 2}, 0.0f, WHITE);
+    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
+    DrawTexturePro(archivos.buttonTexture2, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture2.width), static_cast<float>(archivos.buttonTexture2.height)}, (Rectangle){buttonPosition2.x, buttonPosition2.y, buttonRect2.width, buttonRect2.height}, (Vector2){buttonRect2.width / 2, buttonRect2.height / 2}, 0.0f, WHITE);
+    DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
 
     /* VERIFICAR SI SE HIZO CLIC EN EL BOTÓN */
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -422,6 +502,10 @@ int drawinicio(cargas archivos)
             return 1; // Botón A clickeado
         if (isMouseOverButtonB)
             return 2; // Botón B clickeado
+        if (isMouseOverButton2)
+            return 3; // Botón 2 clickeado
+        if (isMouseOverButton4)
+            return 4; // Botón 4 clickeado
     }
 
     return 0; // Ningún botón
