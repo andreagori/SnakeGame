@@ -524,8 +524,6 @@ JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos)
     if (IsKeyPressed(KEY_DELETE))
     {
         // Si se presiona DELETE, regresar al menú
-        UnloadContent(archivos, JUGAR_BASICO);
-        LoadContent("JUGAR", archivos);
         return JUEGO_REGRESAR_MENU;
     }
 
@@ -547,9 +545,7 @@ JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos)
 
     if (IsKeyPressed(KEY_DELETE))
     {
-        // Si se presiona DELETE, regresar al menú
-        UnloadContent(archivos, JUGAR_BASICO);
-        LoadContent("JUGAR", archivos);
+        // Si se presiona DELETE, regresar al menu.
         return JUEGO_REGRESAR_MENU;
     }
 
@@ -572,8 +568,6 @@ JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos)
     if (IsKeyPressed(KEY_DELETE))
     {
         // Si se presiona DELETE, regresar al menú
-        UnloadContent(archivos, JUGAR_BASICO);
-        LoadContent("JUGAR", archivos);
         return JUEGO_REGRESAR_MENU;
     }
 
