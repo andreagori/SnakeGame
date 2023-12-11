@@ -630,31 +630,36 @@ void juego_basico(cartas todo, memorama estruct)
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
 
-    // Calcular el tamaño de las cartas y el espaciado
-    float cardWidth = 130.0f;
-    float cardHeight = 179.0f;
+    // Definir el número de filas y columnas
+    int numRows = estruct.numRows;
+    int numCols = estruct.numCols;
+
+    // Calcular el espaciado entre las cartas
     float paddingX = 10.0f;
     float paddingY = 10.0f;
 
-    // Calcular el espacio total ocupado por las cartas
-    float totalGridWidth = estruct.numCols * cardWidth + (estruct.numCols - 1) * paddingX;
-    float totalGridHeight = estruct.numRows * cardHeight + (estruct.numRows - 1) * paddingY;
+    // Definir la relación de aspecto deseada (altura / anchura)
+    float aspectRatio = 179.0f / 130.0f; // Ajusta esto según la relación de aspecto de tus cartas
+
+    // Ajustar el tamaño de las cartas
+    float adjustedCardWidth = 130.0f; // Ajusta el valor según lo que desees
+    float cardHeight = adjustedCardWidth * aspectRatio;
 
     // Calcular la posición inicial para centrar la cuadrícula en la pantalla
-    float startX = (screenWidth - totalGridWidth) / 2.0f;
-    float startY = (screenHeight - totalGridHeight) / 2.0f;
+    float startX = (screenWidth - numCols * (adjustedCardWidth + paddingX) + paddingX) / 2.0f;
+    float startY = (screenHeight - numRows * (cardHeight + paddingY) + paddingY) / 2.0f;
 
     // Iterar sobre cada fila y columna
-    for (int row = 0; row < estruct.numRows; ++row)
+    for (int row = 0; row < numRows; ++row)
     {
-        for (int col = 0; col < estruct.numCols; ++col)
+        for (int col = 0; col < numCols; ++col)
         {
             // Calcular la posición de la carta
-            float xPos = startX + col * (cardWidth + paddingX);
+            float xPos = startX + col * (adjustedCardWidth + paddingX);
             float yPos = startY + row * (cardHeight + paddingY);
 
             // Crear un rectángulo para la carta
-            Rectangle cardRect = {xPos, yPos, cardWidth, cardHeight};
+            Rectangle cardRect = {xPos, yPos, adjustedCardWidth, cardHeight};
 
             // Establecer el estado inicial de la carta a 0
             estruct.cards[row][col] = 0;
