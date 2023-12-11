@@ -2,9 +2,7 @@
 #include <cmath>
 #include <string.h>
 
-//------------------------------------------------------------------------------------------
-// Types and Structures Definition
-//------------------------------------------------------------------------------------------
+// TYPEDEF PARA SUBMENUS Y MENUS.
 
 typedef enum jugarscreen
 {
@@ -13,12 +11,14 @@ typedef enum jugarscreen
     COLORES,
 } jugarscreen;
 
+// ESTE TYPEDEF ME AYUDA CON EL ESTADO DEL JUEGO, SI ESTA JUGANDO O SI REGRESA AL MENU ANTERIOR. ------------------------------
 typedef enum JuegoEstado
 {
     JUEGO_JUGANDO,
     JUEGO_REGRESAR_MENU,
 } JuegoEstado;
 
+// ESTE TYPEDEF ME AYUDA CON LOS ESTADOS DE LA PANTALLA, SI ESTA EN EL MENU, JUGANDO, CREDITOS, ETC. TAMBIEN CON JUGAR_... BASICAMENTE JUNTO EL PRIMER TYPEDEF CON ESTE.
 typedef enum GameScreen
 {
     INICIO = 0,
@@ -29,16 +29,14 @@ typedef enum GameScreen
     JUGAR_COLORES,
 } GameScreen;
 
+// STRUCT PARA CARGAR LOS ARCHIVOS DE LAS PANTALLAS. ------------------------------
 typedef struct cargas
 {
     Texture2D backgroundTexture;
     Texture2D backgroundTexture_creditos;
     Texture2D backgroundTexture_basico;
     Texture2D backgroundTexture_letras;
-<<<<<<< HEAD
     Texture2D backgroundTexture_colores;
-=======
->>>>>>> afc022c8488d6d5ddd24e645fc101f8bb5bfe639
     Sound buttonSound;
     Texture2D buttonTextureA;
     Texture2D buttonTextureB;
@@ -49,67 +47,69 @@ typedef struct cargas
     Music musica_fondo;
 } cargas;
 
+// AQUI IRA EL NUEVO STRUCT PARA CADA TEXTURA DE LAS CARTAS, HACER UNO PARA CADA CATEGORIA. ------------------------------
+
 // SACAR LA RESOLUCION DEL MONITOR
 int screenWidth = GetMonitorWidth(0);
 int screenHeight = GetMonitorHeight(0);
 
+// PROTOTIPOS DE FUNCIONES ------------------------------
+// >> CARGAS ARCHIVOS Y MENUS.
 cargas LoadContent(const char pantalla[], cargas archivos);
 void UnloadContent(cargas archivos, GameScreen currentScreen);
-int drawinicio(cargas archivos);
-int drawjugar(GameScreen currentScreen, cargas archivos);
-JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos);
-JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos);
-<<<<<<< HEAD
-JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos);
-=======
->>>>>>> afc022c8488d6d5ddd24e645fc101f8bb5bfe639
 void drawcreditos(cargas archivos);
 void menudraw(GameScreen currentScreen, cargas archivos);
 void ToggleFullscreenAndResize();
 bool musica(bool musicToggle, bool &musicPaused, Music &musica_fondo);
+int drawinicio(cargas archivos);
+int drawjugar(GameScreen currentScreen, cargas archivos);
 
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
+// >> JUEGO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos);
+JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos);
+JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos);
+
+// MAIN ------------------------------
 int main(void)
 {
-    // Initialization
-    //--------------------------------------------------------------------------------------
-
+    // CREAR LA VENTANA E INICIAR EL AUDIO, Y CARGAR LOS ARCHIVOS.
     InitWindow(screenWidth, screenHeight, "SIGN MATCH - GAME");
     InitAudioDevice();
+    SetTargetFPS(60); // Set desired framerate (frames-per-second)
+    Image icon = LoadImage("resources/SG_ICONO.png");
+    SetWindowIcon(icon);
 
+    // ASIGNAR LAS PANTALLAS A LAS VARIABLES. Y TAMBIEN CARGAR EL SONIDO Y LA MUSICA.
     GameScreen currentScreen = INICIO;
     GameScreen nextScreen = INICIO;
     cargas archivos;
     archivos.buttonSound = LoadSound("audio/resources/buttonsound.wav");
     archivos.musica_fondo = LoadMusicStream("audio/resources/fondo.mp3");
     archivos = LoadContent("MENU", archivos);
-
-    SetTargetFPS(60); // Set desired framerate (frames-per-second)
+    // BANDERAS DE LA FUNCION PAUSA MUSICA. Y REPRODUCIR LA MUSICA DE FONDO.
     bool musicPaused = false;
     bool musicToggle = false;
-
-    Image icon = LoadImage("resources/SG_ICONO.png");
-    SetWindowIcon(icon);
     PlayMusicStream(archivos.musica_fondo);
     //--------------------------------------------------------------------------------------
 
-    // Main game loop
-    while (!WindowShouldClose()) // Detect window close button or ESC key
+    // MIENTRAS QUE NO SE CIERRE LA VENTANA, SEGUIR EJECUTANDO EL PROGRAMA.
+    while (!WindowShouldClose()) // TE VA A SACAR DEL PROGRAMA CON EL "ESC".
     {
-        // Update
-        //----------------------------------------------------------------------------------
-        ToggleFullscreenAndResize(); // Manejar cambios de pantalla completa y tamaño de ventana
+        ToggleFullscreenAndResize(); // FUNCION PARA PANTALLA COMPLETA.
 
+        // VARIABLES PARA LOS BOTONES. Y NAVEGAR ENTRE PANTALLAS.
         int buttonClicked = drawinicio(archivos);
         int buttonClicked2 = drawjugar(currentScreen, archivos);
+
+        // SWITCH PARA CAMBIAR DE PANTALLAS EN EL JUEGO, Y TAMBIEN PARA CAMBIAR DE PANTALLAS EN EL MENU.
         switch (currentScreen)
         {
         case INICIO: // AQUI EN ESTA OPCION ESTARA EL MENU.
         {
             if (buttonClicked == 1)
             {
+                // SI SE PRESIONA EL BOTON 1, CAMBIAR A LA PANTALLA JUGAR. Y DESCARGAR LOS ARCHIVOS DE LA PANTALLA ANTERIOR. Y CARGAR LOS ARCHIVOS DE LA PANTALLA NUEVA.
                 PlaySound(archivos.buttonSound);
                 currentScreen = JUGAR;
                 UnloadContent(archivos, INICIO);
@@ -117,6 +117,7 @@ int main(void)
             }
             if (buttonClicked == 2)
             {
+                // SI SE PRESIONA EL BOTON 2, CAMBIAR A LA PANTALLA CREDITOS. Y DESCARGAR LOS ARCHIVOS DE LA PANTALLA ANTERIOR. Y CARGAR LOS ARCHIVOS DE LA PANTALLA NUEVA.
                 PlaySound(archivos.buttonSound);
                 currentScreen = CREDITOS;
                 UnloadContent(archivos, INICIO);
@@ -124,16 +125,17 @@ int main(void)
             }
             if (IsKeyPressed(KEY_M))
             {
+                // SI SE PRESIONA LA TECLA "M", PAUSAR LA MUSICA.
                 musicToggle = !musicToggle;
                 musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
             }
         }
         break;
-        case JUGAR:
+        case JUGAR: // AQUI EN ESTA OPCION ESTARA EL SUBMENU DE JUGAR.
         {
-
             if (buttonClicked2 == 1)
             {
+                // SI SE PRESIONA EL BOTON 1, CAMBIAR A LA PANTALLA JUGAR_BASICO. Y DESCARGAR LOS ARCHIVOS DE LA PANTALLA ANTERIOR. Y CARGAR LOS ARCHIVOS DE LA PANTALLA NUEVA.
                 PlaySound(archivos.buttonSound);
                 currentScreen = JUGAR_BASICO;
                 archivos = LoadContent("JUGAR_BASICO", archivos);
@@ -154,7 +156,6 @@ int main(void)
             {
                 PlaySound(archivos.buttonSound);
                 currentScreen = nextScreen;
-                UnloadContent(archivos, JUGAR);
                 archivos = LoadContent("MENU", archivos);
             }
             if (IsKeyPressed(KEY_M))
@@ -203,7 +204,6 @@ int main(void)
             }
             break;
         }
-<<<<<<< HEAD
         case JUGAR_COLORES:
         {
             JuegoEstado estadoJuego = jugar_colores(currentScreen, archivos);
@@ -222,8 +222,6 @@ int main(void)
             }
             break;
         }
-=======
->>>>>>> afc022c8488d6d5ddd24e645fc101f8bb5bfe639
         case CREDITOS:
         {
 
@@ -321,15 +319,12 @@ cargas LoadContent(const char pantalla[], cargas archivos)
         archivos.backgroundTexture_letras = LoadTexture("resources/SM_PantallaLetras.png");
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
-<<<<<<< HEAD
 
     if (strcmp(pantalla, "JUGAR_COLORES") == 0)
     {
         archivos.backgroundTexture_colores = LoadTexture("resources/SM_PantallaColores.png");
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
-=======
->>>>>>> afc022c8488d6d5ddd24e645fc101f8bb5bfe639
     // Agrega más condiciones para otras pantallas
 
     return archivos;
@@ -367,15 +362,12 @@ void UnloadContent(cargas archivos, GameScreen currentScreen)
         UnloadTexture(archivos.backgroundTexture_letras);
         // UnloadTexture(archivos.buttonTexture1);
     }
-<<<<<<< HEAD
 
     if (currentScreen == JUGAR_COLORES)
     {
         UnloadTexture(archivos.backgroundTexture_colores);
         // UnloadTexture(archivos.buttonTexture1);
     }
-=======
->>>>>>> afc022c8488d6d5ddd24e645fc101f8bb5bfe639
 }
 
 int drawinicio(cargas archivos)
@@ -448,6 +440,8 @@ JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos)
     if (IsKeyPressed(KEY_DELETE))
     {
         // Si se presiona DELETE, regresar al menú
+        UnloadContent(archivos, JUGAR_BASICO);
+        LoadContent("JUGAR", archivos);
         return JUEGO_REGRESAR_MENU;
     }
 
@@ -470,6 +464,8 @@ JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos)
     if (IsKeyPressed(KEY_DELETE))
     {
         // Si se presiona DELETE, regresar al menú
+        UnloadContent(archivos, JUGAR_BASICO);
+        LoadContent("JUGAR", archivos);
         return JUEGO_REGRESAR_MENU;
     }
 
@@ -492,6 +488,8 @@ JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos)
     if (IsKeyPressed(KEY_DELETE))
     {
         // Si se presiona DELETE, regresar al menú
+        UnloadContent(archivos, JUGAR_BASICO);
+        LoadContent("JUGAR", archivos);
         return JUEGO_REGRESAR_MENU;
     }
 
@@ -647,519 +645,3 @@ void ToggleFullscreenAndResize()
         SetWindowSize(screenWidth, screenHeight);
     }
 }
-
-// CODIGO DE TERE PARA REFERENCIA:
-// #include "raylib.h"
-// #include <cmath>
-// // #include "raymath.h"
-
-// typedef enum GameScreen
-// {
-//     INICIO = 0,
-//     JUGAR,
-//     CREDITOS,
-//     BASICOS,
-//     LETRAS,
-//     COLORES
-// } GameScreen;
-
-// // SACAR LA RESOLUCION DEL MONITOR
-// int screenWidth = GetMonitorWidth(0);
-// int screenHeight = GetMonitorHeight(0);
-
-// // FONDOS
-// Texture2D backgroundTexture;
-// // 07/12/23 Añadi imagenes para los fondos
-// Texture2D backgroundTextureA;
-// Texture2D backgroundTextureB;
-// Texture2D backgroundTextureC;
-// Texture2D backgroundTextureD;
-// Texture2D backgroundTextureE;
-// // SONIDO DEL BOTON
-// Sound buttonSound;
-// // BOTONES
-// // Pantalla Inicio
-// Texture2D buttonTextureA;
-// Texture2D buttonTextureB;
-// // PantallaJugar
-// Texture2D buttonTextureC;
-// Texture2D buttonTextureD;
-// Texture2D buttonTextureE;
-// // Pantalla Basicos
-// Texture2D buttonTexture1;
-// // MUSICA
-// Music musica_fondo;
-
-// // CARGAR CONTENIDO
-// void LoadContent();
-// void UnloadContent();
-// // PANTALLAS
-// int drawinicio();
-// int drawjugar();
-// void drawopciones();
-// void drawbasicos();
-// void drawletras();
-// void drawcolores();
-// // EXTRAS
-// void menudraw(GameScreen currentScreen);
-// void ToggleFullscreenAndResize();
-// bool musica(bool musicToggle, bool musicPaused);
-
-// /* --------------------------------------------------------------------------------------------------- */
-// /* PROGRAMA PRINCIPAL */
-// /* --------------------------------------------------------------------------------------------------- */
-// int main(void)
-// {
-//     /* INICIALIZACION */
-//     InitWindow(screenWidth, screenHeight, "SIGN MATCH - GAME");
-//     InitAudioDevice();
-
-//     GameScreen currentScreen = INICIO;
-
-//     /* INICIALIZAR TODAS LAS VARIABLES REQUERIDAS PARA CARGAR LOS DATOS AQUI */
-//     LoadContent();
-//     SetTargetFPS(60); // FRAMES POR SEGUNDO
-//     bool musicPaused = false;
-//     bool musicToggle = false;
-
-//     Image icon = LoadImage("resources/SG_ICONO.png");
-//     SetWindowIcon(icon);
-//     PlayMusicStream(musica_fondo);
-
-//     /* ----------------------------------------------------------------------------------------------- */
-//     /* LOOP PRINCIPAL DEL JUEGO */
-//     /* ----------------------------------------------------------------------------------------------- */
-//     while (!WindowShouldClose()) // DETECTAR QUE SE CIERRA EL PROGRAMA CON LA TECLA (ESC)
-//     {
-//         ToggleFullscreenAndResize(); // MANEJAR CAMBIOS DE PANTALLA COMPLETA Y TAMAÑO DE VENTANA
-
-//         int buttonClicked = drawinicio();
-//         int buttonClicked2 = drawjugar();
-
-//         switch (currentScreen)
-//         {
-//         case INICIO: // AQUI EN ESTA OPCION ESTARA EL MENU.
-//         {
-//             if (buttonClicked == 1)
-//             {
-//                 PlaySound(buttonSound);
-//                 currentScreen = JUGAR;
-//             }
-//             if (buttonClicked == 2)
-//             {
-//                 PlaySound(buttonSound);
-//                 currentScreen = CREDITOS;
-//             }
-//             if (IsKeyPressed(KEY_M))
-//             {
-//                 musicToggle = !musicToggle; // CAMBIAR EL ESTADO DE LA MUSICA CON LA TECLA (M)
-//                 musicPaused = musica(musicToggle, musicPaused);
-//             }
-//         }
-//         break;
-//         case JUGAR:
-//         {
-//             if (buttonClicked2 == 1)
-//             {
-//                 PlaySound(buttonSound);
-//                 currentScreen = BASICOS;
-//             }
-//             if (buttonClicked2 == 2)
-//             {
-//                 PlaySound(buttonSound);
-//                 currentScreen = LETRAS;
-//             }
-//             if (buttonClicked2 == 3)
-//             {
-//                 PlaySound(buttonSound);
-//                 currentScreen = COLORES;
-//             }
-//             if (IsKeyPressed(KEY_DELETE))
-//             {
-//                 PlaySound(buttonSound);
-//                 currentScreen = INICIO;
-//             }
-//         }
-//         break;
-//         case CREDITOS:
-//         {
-//             if (IsKeyPressed(KEY_DELETE))
-//             {
-//                 PlaySound(buttonSound);
-//                 currentScreen = INICIO;
-//             }
-//         }
-//         case BASICOS:
-//         {
-//             if (IsKeyPressed(KEY_DELETE))
-//             {
-//                 PlaySound(buttonSound);
-//                 currentScreen = JUGAR;
-//             }
-//         }
-//         case LETRAS:
-//         {
-//             if (IsKeyPressed(KEY_DELETE))
-//             {
-//                 PlaySound(buttonSound);
-//                 currentScreen = JUGAR;
-//             }
-//         }
-//         case COLORES:
-//         {
-//             if (IsKeyPressed(KEY_DELETE))
-//             {
-//                 PlaySound(buttonSound);
-//                 currentScreen = JUGAR;
-//             }
-//         }
-//         break;
-//         default:
-//             break;
-//         }
-//         /* ------------------------------------------------------------------------------------------- */
-//         /* DIBUJAR */
-//         /* ------------------------------------------------------------------------------------------- */
-//         menudraw(currentScreen);
-//         UpdateMusicStream(musica_fondo);
-//     }
-
-//     /* ----------------------------------------------------------------------------------------------- */
-//     /* CARGAR TODOS LOS DATOS AQUI: Texturas, Fuentes, Audio, etc... */
-//     /* ----------------------------------------------------------------------------------------------- */
-//     UnloadContent();
-//     UnloadImage(icon);
-
-//     CloseWindow(); // CERRAR VENTANA
-
-//     return 0;
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// void LoadContent()
-// {
-//     /* CARGAR LA TEXTURA DE FONDO EN EL MAIN */
-//     // 07/12/23 Cambio de imagen de fondo con doble de resolucion (3960 x 2160)
-//     // Pantalla Inicio
-//     backgroundTexture = LoadTexture("resources/SM_Pantalla.png");
-//     backgroundTextureA = LoadTexture("resources/SM_PantallaCreditos.png");
-//     backgroundTextureB = LoadTexture("resources/SM_PantallaJugar.png");
-//     // Pantalla Jugar
-//     backgroundTextureC = LoadTexture("resources/SM_PantallaBasicos.png");
-//     backgroundTextureD = LoadTexture("resources/SM_PantallaLetras.png");
-//     backgroundTextureE = LoadTexture("resources/SM_PantallaColores.png");
-//     /* AJUSTAR EL TAMAÑO DE LAS IMAGENES SEGUN LA RESOLUCION DE LA PANTALLA */
-//     // Pantalla Inicio
-//     buttonTextureA = LoadTexture("resources/SM_BotonJugar_1.png");
-//     buttonTextureB = LoadTexture("resources/SM_BotonCreditos.png");
-//     // Pantalla Jugar
-//     buttonTextureC = LoadTexture("resources/SM_BotonBasicos.png");
-//     buttonTextureD = LoadTexture("resources/SM_BotonLetras.png");
-//     buttonTextureE = LoadTexture("resources/SM_BotonColores.png");
-//     // Pantalla Basicos
-//     buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
-//     // Sonido/Musica
-//     buttonSound = LoadSound("audio/resources/buttonsound.wav");
-//     musica_fondo = LoadMusicStream("audio/resources/fondo.mp3");
-//     SetMusicVolume(musica_fondo, 1.0f);
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// bool musica(bool musicToggle, bool musicPaused)
-// {
-//     if (musicToggle)
-//     {
-//         /* SI SE CUMPLE musicToggle, PAUSAR LA MUSICA SI ES QUE NO ESTA YA PAUSADA */
-//         if (!musicPaused)
-//         {
-//             PauseMusicStream(musica_fondo);
-//             musicPaused = true;
-//         }
-//     }
-//     else
-//     {
-//         /* REANUDAR LA MUSICA SI musicToggle ESTA PAUSADA */
-//         if (musicPaused)
-//         {
-//             ResumeMusicStream(musica_fondo);
-//             musicPaused = false;
-//         }
-//     }
-//     return musicPaused;
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// void UnloadContent()
-// {
-//     /* LIBERAR LA TEXTURA DE FONDO AL FINAL DEL PROGRAMA */
-//     // FONDOS
-//     UnloadTexture(backgroundTexture);
-//     UnloadTexture(backgroundTextureA);
-//     UnloadTexture(backgroundTextureB);
-//     // BOTONES
-//     UnloadSound(buttonSound);
-//     // Pantalla Inicio
-//     UnloadTexture(buttonTextureA);
-//     UnloadTexture(buttonTextureB);
-//     // Pantalla Jugar
-//     UnloadTexture(buttonTextureC);
-//     UnloadTexture(buttonTextureD);
-//     UnloadTexture(buttonTextureE);
-//     // Pantalla Basicos
-//     UnloadTexture(buttonTexture1);
-//     // MUSICA
-//     UnloadMusicStream(musica_fondo);
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// int drawinicio()
-// {
-//     DrawTexturePro(
-//         backgroundTexture,
-//         (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
-//         (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-//         (Vector2){0, 0},
-//         0.0f,
-//         WHITE);
-
-//     /* DIBUJAR LOS BOTONES */
-//     // 07/12/23 Cambios en esta parte para ajustar que esten centrados horizontalmente a pesar del tamaño de la pantalla
-//     // Tambien modifique la distancia entre ambos botones
-//     Rectangle buttonRectA = {(GetScreenWidth() - buttonTextureA.width) / 2, 420.0f, (float)buttonTextureA.width, (float)buttonTextureA.height};
-//     Rectangle buttonRectB = {(GetScreenWidth() - buttonTextureB.width) / 2, 970.0f, (float)buttonTextureB.width, (float)buttonTextureB.height};
-
-//     /* VERIFICAR SI EL MOUSE ESTA SOBRE LOS BOTONES */
-//     bool isMouseOverButtonA = CheckCollisionPointRec(GetMousePosition(), buttonRectA);
-//     bool isMouseOverButtonB = CheckCollisionPointRec(GetMousePosition(), buttonRectB);
-
-//     /* CAMBIAR EL TAMAÑO DEL BOTON (A,B) SI EL MOUSE ESTA SOBRE DE EL */
-//     if (isMouseOverButtonA)
-//     {
-//         /* AGRANDAR Y REDUCIR (A) */
-//         float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
-//         buttonRectA.width = buttonTextureA.width * scale;
-//         buttonRectA.height = buttonTextureA.height * scale;
-//     }
-
-//     if (isMouseOverButtonB)
-//     {
-//         /* AGRANDAR Y REDUCIR (B) */
-//         float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
-//         buttonRectB.width = buttonTextureB.width * scale;
-//         buttonRectB.height = buttonTextureB.height * scale;
-//     }
-
-//     /* AJUSTAR LA POSICION DEL BOTON PARA QUE ESTE EN EL CENTRO */
-//     Vector2 buttonPosition = {buttonRectA.x + buttonRectA.width / 2, buttonRectA.y + buttonRectA.height / 2};
-//     Vector2 buttonPositionB = {buttonRectB.x + buttonRectB.width / 2, buttonRectB.y + buttonRectB.height / 2};
-//     DrawTexturePro(buttonTextureA, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureA.width), static_cast<float>(buttonTextureA.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRectA.width, buttonRectA.height}, (Vector2){buttonRectA.width / 2, buttonRectA.height / 2}, 0.0f, WHITE);
-//     DrawTexturePro(buttonTextureB, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureB.width), static_cast<float>(buttonTextureB.height)}, (Rectangle){buttonPositionB.x, buttonPositionB.y, buttonRectB.width, buttonRectB.height}, (Vector2){buttonRectB.width / 2, buttonRectB.height / 2}, 0.0f, WHITE);
-
-//     /* VERIFICAR SI SE HIZO CLICK EN EL BOTON */
-//     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-//     {
-//         if (isMouseOverButtonA)
-//             return 1; // Botón A clickeado
-//         if (isMouseOverButtonB)
-//             return 2; // Botón B clickeado
-//     }
-
-//     return 0; // Ningún botón
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// int drawjugar()
-// {
-//     DrawTexturePro(
-//         backgroundTextureB,
-//         (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
-//         (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-//         (Vector2){0, 0},
-//         0.0f,
-//         WHITE);
-
-//     /* DIBUJAR LOS BOTONES */
-//     // 07/12/23 Cambios en esta parte para ajustar que esten centrados horizontalmente a pesar del tamaño de la pantalla
-//     // Tambien modifique la distancia entre ambos botones
-//     Rectangle buttonRectC = {(GetScreenWidth() - buttonTextureC.width) / 2, 400.0f, (float)buttonTextureC.width, (float)buttonTextureC.height};
-//     Rectangle buttonRectD = {(GetScreenWidth() - buttonTextureD.width) / 2, 580.0f, (float)buttonTextureD.width, (float)buttonTextureD.height};
-//     Rectangle buttonRectE = {(GetScreenWidth() - buttonTextureE.width) / 2, 760.0f, (float)buttonTextureE.width, (float)buttonTextureE.height};
-
-//     /* VERIFICAR SI EL MOUSE ESTA SOBRE LOS BOTONES */
-//     bool isMouseOverButtonC = CheckCollisionPointRec(GetMousePosition(), buttonRectC);
-//     bool isMouseOverButtonD = CheckCollisionPointRec(GetMousePosition(), buttonRectD);
-//     bool isMouseOverButtonE = CheckCollisionPointRec(GetMousePosition(), buttonRectE);
-
-//     /* CAMBIAR EL TAMAÑO DEL BOTON (C,D,E) SI EL MOUSE ESTA SOBRE DE EL */
-//     if (isMouseOverButtonC)
-//     {
-//         /* AGRANDAR Y REDUCIR (C) */
-//         float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
-//         buttonRectC.width = buttonTextureC.width * scale;
-//         buttonRectC.height = buttonTextureC.height * scale;
-//     }
-
-//     if (isMouseOverButtonD)
-//     {
-//         /* AGRANDAR Y REDUCIR (D) */
-//         float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
-//         buttonRectD.width = buttonTextureD.width * scale;
-//         buttonRectD.height = buttonTextureD.height * scale;
-//     }
-
-//     if (isMouseOverButtonE)
-//     {
-//         /* AGRANDAR Y REDUCIR (E) */
-//         float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
-//         buttonRectE.width = buttonTextureE.width * scale;
-//         buttonRectE.height = buttonTextureE.height * scale;
-//     }
-
-//     /* AJUSTAR LA POSICION DEL BOTON PARA QUE ESTE EN EL CENTRO */
-//     Vector2 buttonPosition = {buttonRectC.x + buttonRectC.width / 2, buttonRectC.y + buttonRectC.height / 2};
-//     Vector2 buttonPositionB = {buttonRectD.x + buttonRectD.width / 2, buttonRectD.y + buttonRectD.height / 2};
-//     Vector2 buttonPositionC = {buttonRectE.x + buttonRectE.width / 2, buttonRectE.y + buttonRectE.height / 2};
-//     DrawTexturePro(buttonTextureC, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureC.width), static_cast<float>(buttonTextureC.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRectC.width, buttonRectC.height}, (Vector2){buttonRectC.width / 2, buttonRectC.height / 2}, 0.0f, WHITE);
-//     DrawTexturePro(buttonTextureD, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureD.width), static_cast<float>(buttonTextureD.height)}, (Rectangle){buttonPositionB.x, buttonPositionB.y, buttonRectD.width, buttonRectD.height}, (Vector2){buttonRectD.width / 2, buttonRectD.height / 2}, 0.0f, WHITE);
-//     DrawTexturePro(buttonTextureE, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTextureE.width), static_cast<float>(buttonTextureE.height)}, (Rectangle){buttonPositionC.x, buttonPositionC.y, buttonRectE.width, buttonRectE.height}, (Vector2){buttonRectE.width / 2, buttonRectE.height / 2}, 0.0f, WHITE);
-
-//     /* VERIFICAR SI SE HIZO CLICK EN EL BOTON */
-//     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-//     {
-//         if (isMouseOverButtonC)
-//             return 1; // Botón C clickeado
-//         if (isMouseOverButtonD)
-//             return 2; // Botón D clickeado
-//         if (isMouseOverButtonE)
-//             return 3; // Botón D clickeado
-//     }
-
-//     return 0; // Ningún botón
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// void drawcreditos()
-// {
-//     DrawTexturePro(
-//         backgroundTextureA,
-//         (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
-//         (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-//         (Vector2){0, 0},
-//         0.0f,
-//         WHITE);
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// void drawbasicos()
-// {
-//     DrawTexturePro(
-//         backgroundTextureC,
-//         (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
-//         (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-//         (Vector2){0, 0},
-//         0.0f,
-//         WHITE);
-
-//     float initialButtonWidth = 180.0f;
-//     float initialButtonHeight = 239.0f;
-
-//     Rectangle buttonRect1 = {320.0f, 200.0f, initialButtonWidth, initialButtonHeight};
-
-//     Vector2 buttonPosition = {buttonRect1.x + buttonRect1.width / 2, buttonRect1.y + buttonRect1.height / 2};
-
-//     DrawTexturePro(buttonTexture1, (Rectangle){0.0f, 0.0f, static_cast<float>(buttonTexture1.width), static_cast<float>(buttonTexture1.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRect1.width, buttonRect1.height}, (Vector2){buttonRect1.width / 2, buttonRect1.height / 2}, 0.0f, WHITE);
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// void drawletras()
-// {
-//     DrawTexturePro(
-//         backgroundTextureD,
-//         (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
-//         (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-//         (Vector2){0, 0},
-//         0.0f,
-//         WHITE);
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// void drawcolores()
-// {
-//     DrawTexturePro(
-//         backgroundTextureE,
-//         (Rectangle){0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height},
-//         (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-//         (Vector2){0, 0},
-//         0.0f,
-//         WHITE);
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// void menudraw(GameScreen currentScreen)
-// {
-//     BeginDrawing();
-//     ClearBackground(RAYWHITE);
-
-//     switch (currentScreen)
-//     {
-//     case INICIO:
-//         drawinicio();
-//         break;
-//     case JUGAR:
-//         drawjugar();
-//         break;
-//     case CREDITOS:
-//         drawcreditos();
-//         break;
-//     case BASICOS:
-//         drawbasicos();
-//         break;
-//     case LETRAS:
-//         drawletras();
-//         break;
-//     case COLORES:
-//         drawcolores();
-//         break;
-//     default:
-//         break;
-//     }
-
-//     EndDrawing();
-// }
-
-// /* --------------------------------------------------------------------------------------------------- */
-
-// void ToggleFullscreenAndResize()
-// {
-//     if (IsKeyPressed(KEY_F))
-//     {
-//         /* CAMBIAR LA PANTALLA COMPLETA AL PRESIONAR (F11) */
-//         ToggleFullscreen();
-
-//         /* AJUSTAR EL TAMAÑO DE LA PANTALLA AL CAMBIARLO A FULLSCREEN */
-//         if (IsWindowFullscreen())
-//         {
-//             screenWidth = GetMonitorWidth(0);
-//             screenHeight = GetMonitorHeight(0);
-//         }
-//         else
-//         {
-//             /* RESTAURAR LA RESOLUCION AL SALIR DE LA PANTALLA COMPLETA */
-//             screenWidth = GetMonitorWidth(0);
-//             screenHeight = GetMonitorHeight(0);
-//         }
-
-//         /* CAMBIAR EL TAMAÑO DE LA VENTANA */
-//         SetWindowSize(screenWidth, screenHeight);
-//     }
-// }
