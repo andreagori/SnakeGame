@@ -58,6 +58,7 @@ typedef struct cargas
     Texture2D buttonTexture3;
     Texture2D buttonTexture4;
     Music musica_fondo;
+    Font font;
 } cargas;
 
 typedef struct cartas
@@ -72,6 +73,17 @@ typedef struct cartas
     Texture2D carta7;
     Texture2D carta8;
     Texture2D carta9;
+    // COLORES
+    Texture2D carta10;
+    Texture2D carta11;
+    Texture2D carta12;
+    Texture2D carta13;
+    Texture2D carta14;
+    Texture2D carta15;
+    Texture2D carta16;
+    Texture2D carta17;
+    Texture2D carta18;
+    // LETRAS
 } cartas;
 
 typedef struct memorama
@@ -90,12 +102,29 @@ typedef struct memorama
     int prim_carta_filaa;
     int prim_carta_columnaa;
     int card_reveal_number;
-    int carta_1;
-    int carta_2;
     int num_fila = 3;
     int num_columna = 6;
-    std::vector<std::pair<int, int>> cartas_con_pares;
 } memorama;
+
+typedef struct _colores
+{
+    bool card_state[3][6];
+    int cartas[3][6];
+    int cartas_en_estado_1;  // Contador de cartas en estado 1
+    int max_cartas_estado_1; // Número máximo de cartas permitidas en estado 1
+    // Almacena las coordenadas de la primera carta volteada
+    int prim_carta_columna;
+    int prim_carta_fila;
+    // Almacena las coordenadas de la segunda carta volteada
+    int seg_carta_columna;
+    int seg_carta_fila;
+    int paresEncontrados;
+    int prim_carta_filaa;
+    int prim_carta_columnaa;
+    int card_reveal_number;
+    int num_fila = 3;
+    int num_columna = 6;
+} _colores;
 
 // AQUI IRA EL NUEVO STRUCT PARA CADA TEXTURA DE LAS CARTAS, HACER UNO PARA CADA CATEGORIA. ------------------------------
 
@@ -107,7 +136,7 @@ int screenHeight = GetMonitorHeight(0);
 // >> CARGAS ARCHIVOS Y MENUS.
 cargas LoadContent(const char pantalla[], cargas archivos);
 int drawcreditos(cargas archivos);
-void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, memorama estruct);
+void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, cartas todo2, cartas todo3, memorama estruct, _colores estruct2);
 void ToggleFullscreenAndResize();
 bool musica(bool musicToggle, bool &musicPaused, Music &musica_fondo);
 int drawinicio(cargas archivos);
@@ -123,7 +152,9 @@ void iniciar_memo(memorama &estruct);
 void memoria(cartas todo, memorama &estruct, cargas archivos);
 JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama &estruct);
 JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos);
-JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos);
+Texture2D GetCartaTexture_COLOR(cartas todo3, int num_carta);
+void iniciar_memo_COLOR(_colores &estruct2);
+JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos, cartas todo3, _colores &estruct2);
 
 // MAIN ------------------------------
 int main(void)
@@ -148,10 +179,17 @@ int main(void)
 
     // JUEGO
     cartas todo;
+    cartas todo2;
+    cartas todo3;
     memorama estruct;
+    _colores estruct2;
     srand(time(NULL));
     iniciar_memo(estruct);
+    iniciar_memo_COLOR(estruct2);
+    // iniciar_memo_COLOR(estruct2);
     todo = LoadCartas_b("BASICO", todo);
+    todo2 = LoadCartas_b("LETRAS", todo2);
+    todo3 = LoadCartas_b("COLORES", todo3);
     PlayMusicStream(archivos.musica_fondo);
     //--------------------------------------------------------------------------------------
 
@@ -293,7 +331,7 @@ int main(void)
         }
         case JUGAR_COLORES:
         {
-            JuegoEstado estadoJuego = jugar_colores(currentScreen, archivos);
+            JuegoEstado estadoJuego = jugar_colores(currentScreen, archivos, todo3, estruct2);
             if (estadoJuego == JUEGO_REGRESAR_MENU)
             {
                 // Regresa al menú
@@ -344,7 +382,7 @@ int main(void)
         }
         // Draw
         //----------------------------------------------------------------------------------
-        menudraw(currentScreen, archivos, todo, estruct);
+        menudraw(currentScreen, archivos, todo, todo2, todo3, estruct, estruct2);
         UpdateMusicStream(archivos.musica_fondo);
     }
 
@@ -352,6 +390,8 @@ int main(void)
     UnloadContent(archivos, currentScreen);
     UnloadContent(archivos, nextScreen);
     UnloadCartas_b("BASICO", todo);
+    UnloadCartas_b("LETRAS", todo2);
+    UnloadCartas_b("COLORES", todo3);
     UnloadSound(archivos.buttonSound);
     UnloadMusicStream(archivos.musica_fondo);
     UnloadImage(icon);
@@ -420,6 +460,7 @@ cargas LoadContent(const char pantalla[], cargas archivos)
         archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
         archivos.cardsound = LoadSound("audio/resources/SM_cards.wav");
         SetSoundVolume(archivos.cardsound, 1.0f);
+        archivos.font = LoadFont("text/resources/Motley Forces.ttf");
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
 
@@ -429,6 +470,8 @@ cargas LoadContent(const char pantalla[], cargas archivos)
         archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
         archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
         archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
+        archivos.cardsound = LoadSound("audio/resources/SM_cards.wav");
+        SetSoundVolume(archivos.cardsound, 1.0f);
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
 
@@ -438,6 +481,8 @@ cargas LoadContent(const char pantalla[], cargas archivos)
         archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
         archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
         archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
+        archivos.cardsound = LoadSound("audio/resources/SM_cards.wav");
+        SetSoundVolume(archivos.cardsound, 1.0f);
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
     // Agrega más condiciones para otras pantallas
@@ -473,18 +518,21 @@ void UnloadContent(cargas archivos, GameScreen currentScreen)
     {
         UnloadTexture(archivos.backgroundTexture_basico);
         UnloadSound(archivos.cardsound);
+        UnloadFont(archivos.font);
         // UnloadTexture(archivos.buttonTexture1);
     }
 
     if (currentScreen == JUGAR_LETRAS)
     {
         UnloadTexture(archivos.backgroundTexture_letras);
+        UnloadSound(archivos.cardsound);
         // UnloadTexture(archivos.buttonTexture1);
     }
 
     if (currentScreen == JUGAR_COLORES)
     {
         UnloadTexture(archivos.backgroundTexture_colores);
+        UnloadSound(archivos.cardsound);
         // UnloadTexture(archivos.buttonTexture1);
     }
 }
@@ -505,6 +553,20 @@ cartas LoadCartas_b(const char categoria[], cartas todo)
         todo.carta9 = LoadTexture("resources/SM_CartaSi.png");
     }
 
+    if (strcmp(categoria, "COLORES") == 0)
+    {
+        todo.carta_back = LoadTexture("resources/SM_CartaAtras.png");
+        todo.carta10 = LoadTexture("resources/SM_CartaRojo.png");
+        todo.carta11 = LoadTexture("resources/SM_CartaAzul.png");
+        todo.carta12 = LoadTexture("resources/SM_CartaVerde.png");
+        todo.carta13 = LoadTexture("resources/SM_CartaAmarillo.png");
+        todo.carta14 = LoadTexture("resources/SM_CartaBlanco.png");
+        todo.carta15 = LoadTexture("resources/SM_CartaNegro.png");
+        todo.carta16 = LoadTexture("resources/SM_CartaCafe.png");
+        todo.carta17 = LoadTexture("resources/SM_CartaColor.png");
+        todo.carta18 = LoadTexture("resources/SM_CartaRosa.png");
+    }
+
     return todo;
 }
 
@@ -522,6 +584,20 @@ cartas UnloadCartas_b(const char categoria[], cartas todo)
         UnloadTexture(todo.carta7);
         UnloadTexture(todo.carta8);
         UnloadTexture(todo.carta9);
+    }
+
+    if (strcmp(categoria, "COLORES") == 0)
+    {
+        UnloadTexture(todo.carta_back);
+        UnloadTexture(todo.carta10);
+        UnloadTexture(todo.carta11);
+        UnloadTexture(todo.carta12);
+        UnloadTexture(todo.carta13);
+        UnloadTexture(todo.carta14);
+        UnloadTexture(todo.carta15);
+        UnloadTexture(todo.carta16);
+        UnloadTexture(todo.carta17);
+        UnloadTexture(todo.carta18);
     }
 
     return todo;
@@ -715,8 +791,8 @@ void memoria(cartas todo, memorama &estruct, cargas archivos)
     int fila = estruct.num_fila;
     int columna = estruct.num_columna;
 
-    float espacioX = 10.0f;
-    float espacioY = 10.0f;
+    float espacioX = 8.0f;
+    float espacioY = 8.0f;
 
     float aspecto = 179.0f / 130.0f;
     float ajustes = 130.0f;
@@ -726,6 +802,7 @@ void memoria(cartas todo, memorama &estruct, cargas archivos)
 
     // Agregar una matriz para rastrear qué pares ya fueron encontrados
     static bool cartas_pares_encontrados[3][6] = {false};
+    static int pares_encontrados = 0;
 
     for (int i = 0; i < fila; i++)
     {
@@ -765,6 +842,8 @@ void memoria(cartas todo, memorama &estruct, cargas archivos)
 
                         if (valor == valor2)
                         {
+                            pares_encontrados++;
+                            printf("Pares encontrados: %d\n", pares_encontrados);
 
                             // Marcar el par como encontrado en la matriz
                             cartas_pares_encontrados[i][j] = true;
@@ -843,6 +922,16 @@ void memoria(cartas todo, memorama &estruct, cargas archivos)
                 (Vector2){0, 0},
                 0.0f,
                 WHITE);
+
+            char texto[30];
+            sprintf(texto, "Pares encontrados: %d", pares_encontrados);
+
+            int fontsize = 25;
+            int textoAncho = MeasureText(texto, fontsize);
+            int textoAlto = fontsize;
+
+            Color micolorpersonalizado = {14, 102, 85, 255};
+            DrawTextEx(archivos.font, texto, (Vector2){GetScreenWidth() - textoAncho - 10 - 90, GetScreenHeight() - textoAlto - 10}, fontsize, 2, micolorpersonalizado);
         }
     }
 }
@@ -1013,7 +1102,229 @@ JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos)
     return JUEGO_JUGANDO;
 }
 
-JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos)
+Texture2D GetCartaTexture_COLOR(cartas todo3, int num_carta)
+{
+    switch (num_carta)
+    {
+    case 10:
+        return todo3.carta10;
+    case 11:
+        return todo3.carta11;
+    case 12:
+        return todo3.carta12;
+    case 13:
+        return todo3.carta13;
+    case 14:
+        return todo3.carta14;
+    case 15:
+        return todo3.carta15;
+    case 16:
+        return todo3.carta16;
+    case 17:
+        return todo3.carta17;
+    case 18:
+        return todo3.carta18;
+    // Agrega más casos según la cantidad de cartas que tengas
+    default:
+        return todo3.carta_back; // Textura por defecto (carta oculta)
+    }
+}
+
+void iniciar_memo_COLOR(_colores &estruct2)
+{
+    // Inicializar las coordenadas de las cartas volteadas
+
+    estruct2.prim_carta_fila = -1;
+    estruct2.prim_carta_columna = -1;
+    estruct2.seg_carta_fila = -1;
+    estruct2.seg_carta_columna = -1;
+
+    // Inicializar el contador de cartas en estado 1
+    estruct2.cartas_en_estado_1 = 0;
+    // Establecer el número máximo de cartas permitidas en estado 1
+    estruct2.max_cartas_estado_1 = 2;
+
+    // Inicializar todas las cartas como false
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 6; j++)
+        {
+            estruct2.card_state[i][j] = false;
+        }
+    }
+
+    // Números del 1 al 9
+    int numeros_disponibles[] = {10, 11, 12, 13, 14, 15, 16, 17, 18, 10, 11, 12, 13, 14, 15, 16, 17, 18};
+
+    // Barajar los números disponibles
+    srand((unsigned int)time(NULL));
+    for (int i = 17; i > 0; i--)
+    {
+        int j = rand() % (i + 1);
+        // Intercambiar numeros_disponibles[i] y numeros_disponibles[j]
+        int temp = numeros_disponibles[i];
+        numeros_disponibles[i] = numeros_disponibles[j];
+        numeros_disponibles[j] = temp;
+    }
+
+    // Asignar aleatoriamente las cartas
+    int indice = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 6; j++)
+        {
+            // Asignar el valor a la carta
+            estruct2.cartas[i][j] = numeros_disponibles[indice];
+
+            // Imprimir las cartas asignadas
+            // printf("Carta asignada en (%d, %d): %d\n", i, j, estruct.cartas[i][j]);
+
+            indice++;
+        }
+    }
+}
+
+void COLOR_memoria(cartas todo3, _colores &estruct2, cargas archivos)
+{
+    int ancho = GetScreenWidth();
+    int altura = GetScreenHeight();
+
+    int fila = estruct2.num_fila;
+    int columna = estruct2.num_columna;
+
+    float espacioX = 10.0f;
+    float espacioY = 10.0f;
+
+    float aspecto = 179.0f / 130.0f;
+    float ajustes = 130.0f;
+    float ajuste_altura = ajustes * aspecto;
+
+    Vector2 mouse = GetMousePosition();
+
+    // Agregar una matriz para rastrear qué pares ya fueron encontrados
+    static bool cartas_pares_encontrados[3][6] = {false};
+
+    for (int i = 0; i < fila; i++)
+    {
+        for (int j = 0; j < columna; j++)
+        {
+            float posx = (ancho - columna * (ajustes + espacioX) + espacioX) / 2 + j * (ajustes + espacioX);
+            float posy = (altura - fila * (ajuste_altura + espacioY) + espacioY) / 2 + i * (ajuste_altura + espacioY);
+
+            Rectangle carta = {posx, posy, ajustes, ajuste_altura};
+            bool isMouseOverCard = CheckCollisionPointRec(mouse, carta);
+
+            // Verificar si la carta ya es parte de un par encontrado
+            if (cartas_pares_encontrados[i][j])
+            {
+                // No permitir interacción con estas cartas
+                continue;
+            }
+
+            // Chequear clic izquierdo en la carta
+            if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                PlaySound(archivos.cardsound);
+                // Verificar el estado actual de la carta
+                if (!estruct2.card_state[i][j] && estruct2.cartas_en_estado_1 < estruct2.max_cartas_estado_1)
+                {
+                    // Si ya hay una carta volteada, verificar si es la misma
+                    if (estruct2.prim_carta_fila != -1 && estruct2.prim_carta_columna != -1 &&
+                        (estruct2.prim_carta_fila != i || estruct2.prim_carta_columna != j))
+                    {
+                        // Verificar si las cartas son iguales
+                        estruct2.cartas[estruct2.seg_carta_fila][estruct2.seg_carta_columna] = estruct2.cartas[i][j];
+                        int valor = estruct2.cartas[estruct2.seg_carta_fila][estruct2.seg_carta_columna];
+                        int valor2 = estruct2.cartas[estruct2.prim_carta_fila][estruct2.prim_carta_columna];
+
+                        printf("Carta volteada UNO en (%d, %d): %d\n", i, j, valor);
+                        printf("Carta volteada DOS en (%d, %d): %d\n", estruct2.prim_carta_fila, estruct2.prim_carta_columna, valor2);
+
+                        if (valor == valor2)
+                        {
+
+                            // Marcar el par como encontrado en la matriz
+                            cartas_pares_encontrados[i][j] = true;
+                            cartas_pares_encontrados[estruct2.prim_carta_fila][estruct2.prim_carta_columna] = true;
+
+                            // Ambas cartas son iguales, reiniciar las coordenadas de ambas cartas
+                            estruct2.prim_carta_fila = -1;
+                            estruct2.prim_carta_columna = -1;
+                            estruct2.seg_carta_fila = -1;
+                            estruct2.seg_carta_columna = -1;
+                            estruct2.cartas_en_estado_1 = 0;
+                            estruct2.max_cartas_estado_1 = 2;
+
+                            // No permitir interacción con estas cartas
+                            continue;
+                        }
+                        else
+                        {
+                            // Las cartas no son iguales, esperar para volver a voltearlas
+                            SetMouseCursor(MOUSE_CURSOR_ARROW);
+                        }
+                    }
+                    else
+                    {
+                        // No hay carta volteada previamente, actualizar las coordenadas de la primera carta
+                        estruct2.prim_carta_fila = i;
+                        estruct2.prim_carta_columna = j;
+                        estruct2.seg_carta_fila = -1;
+                        estruct2.seg_carta_columna = -1;
+                    }
+
+                    // Cambiar el estado de la carta a 1
+                    estruct2.card_state[i][j] = true;
+                    estruct2.cartas_en_estado_1++;
+
+                    // Verificar si la segunda carta ya está volteada
+                    if (estruct2.seg_carta_fila != -1 && estruct2.seg_carta_columna != -1)
+                    {
+                        // No permitir interacción con estas cartas
+                        continue;
+                    }
+
+                    // No permitir interacción con la primera carta ya volteada
+                    continue;
+                }
+                else if (estruct2.card_state[i][j])
+                {
+                    // Si la carta estaba en estado 1, cambiarla a 0
+                    estruct2.card_state[i][j] = false;
+                    estruct2.cartas_en_estado_1--;
+
+                    // Reiniciar las coordenadas de la primera y segunda carta
+                    estruct2.prim_carta_fila = -1;
+                    estruct2.prim_carta_columna = -1;
+                    estruct2.seg_carta_fila = -1;
+                    estruct2.seg_carta_columna = -1;
+                }
+            }
+
+            // Dibujar cartas
+            int num_carta = estruct2.cartas[i][j];
+            Texture2D currentTexture;
+            if (estruct2.card_state[i][j])
+            {
+                currentTexture = GetCartaTexture_COLOR(todo3, num_carta);
+            }
+            else
+            {
+                currentTexture = todo3.carta_back;
+            }
+
+            DrawTexturePro(
+                currentTexture,
+                (Rectangle){0, 0, (float)currentTexture.width, (float)currentTexture.height},
+                carta,
+                (Vector2){0, 0},
+                0.0f,
+                WHITE);
+        }
+    }
+}
+
+JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos, cartas todo3, _colores &estruct2)
 {
     DrawTexturePro(
         archivos.backgroundTexture_colores,
@@ -1074,6 +1385,7 @@ JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos)
     DrawTexturePro(archivos.buttonTexture3, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture3.width), static_cast<float>(archivos.buttonTexture3.height)}, (Rectangle){buttonPosition3.x, buttonPosition3.y, buttonRect3.width, buttonRect3.height}, (Vector2){buttonRect3.width / 2, buttonRect3.height / 2}, 0.0f, WHITE);
     DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
 
+    COLOR_memoria(todo3, estruct2, archivos);
     if (IsKeyPressed(KEY_DELETE))
     {
         // Si se presiona DELETE, regresar al menú
@@ -1299,7 +1611,7 @@ int drawcreditos(cargas archivos)
     return 0; // Ningún botón
 }
 
-void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, memorama estruct)
+void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, cartas todo2, cartas todo3, memorama estruct, _colores estruct2)
 {
     BeginDrawing();
     ClearBackground(RAYWHITE);
@@ -1333,7 +1645,7 @@ void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, memorama e
     }
     case JUGAR_COLORES:
     {
-        jugar_colores(currentScreen, archivos);
+        jugar_colores(currentScreen, archivos, todo3, estruct2);
         break;
     }
     default:
