@@ -747,18 +747,22 @@ void memoria(cartas todo, memorama &estruct)
             {
                 if (estruct.card_state[i][j] == false)
                 {
-                    estruct.card_state[i][j] = true;
                     cartasVolteadas++;
 
                     if (cartasVolteadas == 1)
                     {
+                        estruct.card_state[i][j] = true;
                         filaPrimeraCarta = i;
                         columnaPrimeraCarta = j;
                     }
-                    else if (cartasVolteadas == 2)
+                    else
                     {
-                        filaSegundaCarta = i;
-                        columnaSegundaCarta = j;
+                        if (cartasVolteadas == 2)
+                        {
+                            estruct.card_state[i][j] = true;
+                            filaSegundaCarta = i;
+                            columnaSegundaCarta = j;
+                        }
                     }
                 }
             }
@@ -767,11 +771,20 @@ void memoria(cartas todo, memorama &estruct)
 
     if (cartasVolteadas == 2)
     {
-        if (estruct.cartas[filaPrimeraCarta][columnaPrimeraCarta] != estruct.cartas[filaSegundaCarta][columnaSegundaCarta])
+        if (estruct.cartas[filaPrimeraCarta][columnaPrimeraCarta] == estruct.cartas[filaSegundaCarta][columnaSegundaCarta])
         {
-            voltearTodasLasCartas = true;
+            estruct.card_state[filaPrimeraCarta][columnaPrimeraCarta] = true;
+            estruct.card_state[filaSegundaCarta][columnaSegundaCarta] = true;
+            voltearTodasLasCartas = false;
+            cartasVolteadas = 0;
         }
-        cartasVolteadas = 0;
+        else
+        {
+            estruct.card_state[filaPrimeraCarta][columnaPrimeraCarta] = false;
+            estruct.card_state[filaSegundaCarta][columnaSegundaCarta] = false;
+            voltearTodasLasCartas = true;
+            cartasVolteadas = 0;
+        }
     }
 
     if (voltearTodasLasCartas)
@@ -781,7 +794,10 @@ void memoria(cartas todo, memorama &estruct)
         {
             for (int j = 0; j < columna; j++)
             {
-                estruct.card_state[i][j] = false;
+                if (estruct.card_state[i][j] == true)
+                {
+                    estruct.card_state[i][j] = false;
+                }
             }
         }
     }
