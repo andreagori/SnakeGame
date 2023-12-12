@@ -720,6 +720,9 @@ void memoria(cartas todo, memorama &estruct)
 
     Vector2 mouse = GetMousePosition();
 
+    // Agregar una matriz para rastrear qué pares ya fueron encontrados
+    static bool cartas_pares_encontrados[3][6] = {false};
+
     for (int i = 0; i < fila; i++)
     {
         for (int j = 0; j < columna; j++)
@@ -729,6 +732,13 @@ void memoria(cartas todo, memorama &estruct)
 
             Rectangle carta = {posx, posy, ajustes, ajuste_altura};
             bool isMouseOverCard = CheckCollisionPointRec(mouse, carta);
+
+            // Verificar si la carta ya es parte de un par encontrado
+            if (cartas_pares_encontrados[i][j])
+            {
+                // No permitir interacción con estas cartas
+                continue;
+            }
 
             // Chequear clic izquierdo en la carta
             if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -741,15 +751,27 @@ void memoria(cartas todo, memorama &estruct)
                         (estruct.prim_carta_fila != i || estruct.prim_carta_columna != j))
                     {
                         // Verificar si las cartas son iguales
-                        printf("Carta volteada UNO en (%d, %d): %d\n", i, j, estruct.cartas[i][j]);
-                        printf("Carta volteada DOS en (%d, %d): %d\n", estruct.prim_carta_fila, estruct.prim_carta_columna, estruct.cartas[estruct.prim_carta_fila][estruct.prim_carta_columna]);
-                        if (estruct.cartas[i][j] == estruct.cartas[estruct.prim_carta_fila][estruct.prim_carta_columna])
+                        estruct.cartas[estruct.seg_carta_fila][estruct.seg_carta_columna] = estruct.cartas[i][j];
+                        int valor = estruct.cartas[estruct.seg_carta_fila][estruct.seg_carta_columna];
+                        int valor2 = estruct.cartas[estruct.prim_carta_fila][estruct.prim_carta_columna];
+
+                        printf("Carta volteada UNO en (%d, %d): %d\n", i, j, valor);
+                        printf("Carta volteada DOS en (%d, %d): %d\n", estruct.prim_carta_fila, estruct.prim_carta_columna, valor2);
+
+                        if (valor == valor2)
                         {
-                            // Ambas cartas son iguales, reiniciar las coordenadas de la primera carta
+
+                            // Marcar el par como encontrado en la matriz
+                            cartas_pares_encontrados[i][j] = true;
+                            cartas_pares_encontrados[estruct.prim_carta_fila][estruct.prim_carta_columna] = true;
+
+                            // Ambas cartas son iguales, reiniciar las coordenadas de ambas cartas
                             estruct.prim_carta_fila = -1;
                             estruct.prim_carta_columna = -1;
                             estruct.seg_carta_fila = -1;
                             estruct.seg_carta_columna = -1;
+                            estruct.cartas_en_estado_1 = 0;
+                            estruct.max_cartas_estado_1 = 2;
 
                             // No permitir interacción con estas cartas
                             continue;
@@ -765,6 +787,8 @@ void memoria(cartas todo, memorama &estruct)
                         // No hay carta volteada previamente, actualizar las coordenadas de la primera carta
                         estruct.prim_carta_fila = i;
                         estruct.prim_carta_columna = j;
+                        estruct.seg_carta_fila = -1;
+                        estruct.seg_carta_columna = -1;
                     }
 
                     // Cambiar el estado de la carta a 1
