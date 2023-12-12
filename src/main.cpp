@@ -47,6 +47,7 @@ typedef struct cargas
     Texture2D backgroundTexture_letras;
     Texture2D backgroundTexture_colores;
     Sound buttonSound;
+    Sound cardsound;
     Texture2D buttonTextureA;
     Texture2D buttonTextureB;
     Texture2D buttonTextureC;
@@ -119,7 +120,7 @@ Texture2D GetCartaTexture(cartas todo, int num_carta);
 int contarRepeticiones(memorama &estruct, int numero);
 void voltearCartas(memorama &estruct, int fila, int columna);
 void iniciar_memo(memorama &estruct);
-void memoria(cartas todo, memorama &estruct);
+void memoria(cartas todo, memorama &estruct, cargas archivos);
 JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama &estruct);
 JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos);
 JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos);
@@ -417,6 +418,8 @@ cargas LoadContent(const char pantalla[], cargas archivos)
         archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
         archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
         archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
+        archivos.cardsound = LoadSound("audio/resources/SM_cards.wav");
+        SetSoundVolume(archivos.cardsound, 1.0f);
         // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
     }
 
@@ -469,6 +472,7 @@ void UnloadContent(cargas archivos, GameScreen currentScreen)
     if (currentScreen == JUGAR_BASICO)
     {
         UnloadTexture(archivos.backgroundTexture_basico);
+        UnloadSound(archivos.cardsound);
         // UnloadTexture(archivos.buttonTexture1);
     }
 
@@ -703,7 +707,7 @@ void iniciar_memo(memorama &estruct)
     }
 }
 
-void memoria(cartas todo, memorama &estruct)
+void memoria(cartas todo, memorama &estruct, cargas archivos)
 {
     int ancho = GetScreenWidth();
     int altura = GetScreenHeight();
@@ -743,6 +747,7 @@ void memoria(cartas todo, memorama &estruct)
             // Chequear clic izquierdo en la carta
             if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
             {
+                PlaySound(archivos.cardsound);
                 // Verificar el estado actual de la carta
                 if (!estruct.card_state[i][j] && estruct.cartas_en_estado_1 < estruct.max_cartas_estado_1)
                 {
@@ -903,7 +908,7 @@ JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo,
     DrawTexturePro(archivos.buttonTexture3, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture3.width), static_cast<float>(archivos.buttonTexture3.height)}, (Rectangle){buttonPosition3.x, buttonPosition3.y, buttonRect3.width, buttonRect3.height}, (Vector2){buttonRect3.width / 2, buttonRect3.height / 2}, 0.0f, WHITE);
     DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
 
-    memoria(todo, estruct);
+    memoria(todo, estruct, archivos);
 
     /* VERIFICAR SI SE HIZO CLIC EN EL BOTÓN */
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
