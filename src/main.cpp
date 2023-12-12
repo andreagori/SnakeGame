@@ -699,7 +699,6 @@ void iniciar_memo(memorama &estruct)
 
 void memoria(cartas todo, memorama &estruct)
 {
-
     int ancho = GetScreenWidth();
     int altura = GetScreenHeight();
 
@@ -715,6 +714,14 @@ void memoria(cartas todo, memorama &estruct)
 
     Vector2 mouse = GetMousePosition();
 
+    static int cartasVolteadas = 0;
+    static int filaPrimeraCarta = -1;
+    static int columnaPrimeraCarta = -1;
+    static int filaSegundaCarta = -1;
+    static int columnaSegundaCarta = -1;
+
+    bool voltearTodasLasCartas = false;
+
     for (int i = 0; i < fila; i++)
     {
         for (int j = 0; j < columna; j++)
@@ -722,13 +729,10 @@ void memoria(cartas todo, memorama &estruct)
             float posx = (ancho - columna * (ajustes + espacioX) + espacioX) / 2 + j * (ajustes + espacioX);
             float posy = (altura - fila * (ajuste_altura + espacioY) + espacioY) / 2 + i * (ajuste_altura + espacioY);
 
-            // CREAR UN RECTANGULO PARA CADA CARTA.
             Rectangle carta = {posx, posy, ajustes, ajuste_altura};
-
-            // VERIFICAR SI EL MOUSE ESTA ENCIMA DE LA CARTA.
             bool isMouseOverCard = CheckCollisionPointRec(mouse, carta);
 
-            // DIBUJAR CARTAS
+            // Dibujar cartas
             int num_carta = estruct.cartas[i][j];
             DrawTexturePro(
                 (estruct.card_state[i][j]) ? GetCartaTexture(todo, num_carta) : todo.carta_back,
@@ -738,23 +742,46 @@ void memoria(cartas todo, memorama &estruct)
                 0.0f,
                 WHITE);
 
-            // ACTUALIZAR ESTADO DE CARTAS //
-            if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            // Actualizar estado de cartas
+            if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && cartasVolteadas < 2)
             {
-                estruct.card_state[i][j] = true;
-
-                // DIBUJAR LA CARTA DE ATRAS
-                if (!estruct.card_state[i][j] == false)
+                if (estruct.card_state[i][j] == false)
                 {
-                    DrawTexturePro(
-                        todo.carta_back,
-                        (Rectangle){0, 0, (float)todo.carta_back.width, (float)todo.carta_back.height},
-                        carta,
-                        (Vector2){0, 0},
-                        0.0f,
-                        WHITE);
-                    // printf("POSICION: %d, %d\n", i, j);
+                    estruct.card_state[i][j] = true;
+                    cartasVolteadas++;
+
+                    if (cartasVolteadas == 1)
+                    {
+                        filaPrimeraCarta = i;
+                        columnaPrimeraCarta = j;
+                    }
+                    else if (cartasVolteadas == 2)
+                    {
+                        filaSegundaCarta = i;
+                        columnaSegundaCarta = j;
+                    }
                 }
+            }
+        }
+    }
+
+    if (cartasVolteadas == 2)
+    {
+        if (estruct.cartas[filaPrimeraCarta][columnaPrimeraCarta] != estruct.cartas[filaSegundaCarta][columnaSegundaCarta])
+        {
+            voltearTodasLasCartas = true;
+        }
+        cartasVolteadas = 0;
+    }
+
+    if (voltearTodasLasCartas)
+    {
+
+        for (int i = 0; i < fila; i++)
+        {
+            for (int j = 0; j < columna; j++)
+            {
+                estruct.card_state[i][j] = false;
             }
         }
     }
