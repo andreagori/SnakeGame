@@ -73,7 +73,13 @@ typedef struct cartas
     Texture2D carta7;
     Texture2D carta8;
     Texture2D carta9;
+
+} cartas;
+
+typedef struct COLOR_cartas
+{
     // COLORES
+    Texture2D carta_back;
     Texture2D carta10;
     Texture2D carta11;
     Texture2D carta12;
@@ -83,7 +89,12 @@ typedef struct cartas
     Texture2D carta16;
     Texture2D carta17;
     Texture2D carta18;
+} COLOR_cartas;
+
+typedef struct LETRAS_cartas
+{
     // LETRAS
+    Texture2D carta_back;
     Texture2D carta19;
     Texture2D carta20;
     Texture2D carta21;
@@ -93,7 +104,7 @@ typedef struct cartas
     Texture2D carta25;
     Texture2D carta26;
     Texture2D carta27;
-} cartas;
+} LETRAS_cartas;
 
 typedef struct memorama
 {
@@ -165,7 +176,7 @@ int screenHeight = GetMonitorHeight(0);
 // >> CARGAS ARCHIVOS Y MENUS.
 cargas LoadContent(const char pantalla[], cargas archivos);
 int drawcreditos(cargas archivos);
-void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, cartas todo2, cartas todo3, memorama estruct, _colores estruct2, Letras estruct3);
+void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, LETRAS_cartas todo2, COLOR_cartas todo3, memorama estruct, _colores estruct2, Letras estruct3);
 void ToggleFullscreenAndResize();
 bool musica(bool musicToggle, bool &musicPaused, Music &musica_fondo);
 int drawinicio(cargas archivos);
@@ -180,15 +191,19 @@ void iniciar_memo(memorama &estruct);
 void memoria(cartas todo, memorama &estruct, cargas archivos);
 JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama &estruct);
 // >> JUEGO LETRAS -----------------------------------------
-Texture2D GetCartaTexture_LETRA(cartas todo2, int num_carta);
+LETRAS_cartas LoadCartasLETRAS(const char categoria[], LETRAS_cartas todo2);
+Texture2D GetCartaTexture_LETRA(LETRAS_cartas todo2, int num_carta);
 void iniciar_memo_LETRA(Letras &estruct3);
-void LETRAS_memoria(cartas todo2, Letras &estruct3, cargas archivos);
-JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos, cartas todo2, Letras &estruct3);
+void LETRAS_memoria(LETRAS_cartas todo2, Letras &estruct3, cargas archivos);
+JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos, LETRAS_cartas todo2, Letras &estruct3);
+LETRAS_cartas UnloadCartasLETRAS(const char categoria[], LETRAS_cartas todo2);
 // >> JUEGO COLORES -----------------------------------------
-Texture2D GetCartaTexture_COLOR(cartas todo3, int num_carta);
+COLOR_cartas LoadCartasCOLORES(const char categoria[], COLOR_cartas todo3);
+Texture2D GetCartaTexture_COLOR(COLOR_cartas todo3, int num_carta);
 void iniciar_memo_COLOR(_colores &estruct2);
-void COLOR_memoria(cartas todo3, _colores &estruct2, cargas archivos);
-JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos, cartas todo3, _colores &estruct2);
+void COLOR_memoria(COLOR_cartas todo3, _colores &estruct2, cargas archivos);
+JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos, COLOR_cartas todo3, _colores &estruct2);
+COLOR_cartas UnloadCartasCOLORES(const char categoria[], COLOR_cartas todo3);
 
 // MAIN ------------------------------
 int main(void)
@@ -213,8 +228,8 @@ int main(void)
 
     // JUEGO
     cartas todo;
-    cartas todo2;
-    cartas todo3;
+    LETRAS_cartas todo2;
+    COLOR_cartas todo3;
     memorama estruct;
     _colores estruct2;
     Letras estruct3;
@@ -222,9 +237,6 @@ int main(void)
     iniciar_memo(estruct);
     iniciar_memo_LETRA(estruct3);
     iniciar_memo_COLOR(estruct2);
-    todo = LoadCartas_b("BASICO", todo);
-    todo2 = LoadCartas_b("LETRAS", todo2);
-    todo3 = LoadCartas_b("COLORES", todo3);
     PlayMusicStream(archivos.musica_fondo);
     //--------------------------------------------------------------------------------------
 
@@ -279,18 +291,21 @@ int main(void)
             {
                 // SI SE PRESIONA EL BOTON 1, CAMBIAR A LA PANTALLA JUGAR_BASICO. Y DESCARGAR LOS ARCHIVOS DE LA PANTALLA ANTERIOR. Y CARGAR LOS ARCHIVOS DE LA PANTALLA NUEVA.
                 PlaySound(archivos.buttonSound);
+                todo = LoadCartas_b("BASICO", todo);
                 currentScreen = JUGAR_BASICO;
                 archivos = LoadContent("JUGAR_BASICO", archivos);
             }
             if (buttonClicked2 == 2)
             {
                 PlaySound(archivos.buttonSound);
+                todo2 = LoadCartasLETRAS("LETRAS", todo2);
                 currentScreen = JUGAR_LETRAS;
                 archivos = LoadContent("JUGAR_LETRAS", archivos);
             }
             if (buttonClicked2 == 3)
             {
                 PlaySound(archivos.buttonSound);
+                todo3 = LoadCartasCOLORES("COLORES", todo3);
                 currentScreen = JUGAR_COLORES;
                 archivos = LoadContent("JUGAR_COLORES", archivos);
             }
@@ -425,8 +440,8 @@ int main(void)
     UnloadContent(archivos, currentScreen);
     UnloadContent(archivos, nextScreen);
     UnloadCartas_b("BASICO", todo);
-    UnloadCartas_b("LETRAS", todo2);
-    UnloadCartas_b("COLORES", todo3);
+    UnloadCartasLETRAS("LETRAS", todo2);
+    UnloadCartasCOLORES("COLORES", todo3);
     UnloadSound(archivos.buttonSound);
     UnloadMusicStream(archivos.musica_fondo);
     UnloadImage(icon);
@@ -592,34 +607,79 @@ cartas LoadCartas_b(const char categoria[], cartas todo)
         todo.carta9 = LoadTexture("resources/SM_CartaSi.png");
     }
 
-    if (strcmp(categoria, "COLORES") == 0)
-    {
-        todo.carta_back = LoadTexture("resources/SM_CartaAtras.png");
-        todo.carta10 = LoadTexture("resources/SM_CartaRojo.png");
-        todo.carta11 = LoadTexture("resources/SM_CartaAzul.png");
-        todo.carta12 = LoadTexture("resources/SM_CartaVerde.png");
-        todo.carta13 = LoadTexture("resources/SM_CartaAmarillo.png");
-        todo.carta14 = LoadTexture("resources/SM_CartaBlanco.png");
-        todo.carta15 = LoadTexture("resources/SM_CartaNegro.png");
-        todo.carta16 = LoadTexture("resources/SM_CartaCafe.png");
-        todo.carta17 = LoadTexture("resources/SM_CartaColor.png");
-        todo.carta18 = LoadTexture("resources/SM_CartaRosa.png");
-    }
+    return todo;
+}
 
+LETRAS_cartas LoadCartasLETRAS(const char categoria[], LETRAS_cartas todo2)
+{
     if (strcmp(categoria, "LETRAS") == 0)
     {
-        todo.carta_back = LoadTexture("resources/SM_CartaAtras.png");
-        todo.carta19 = LoadTexture("resources/SM_CartaA.png");
-        todo.carta20 = LoadTexture("resources/SM_CartaC.png");
-        todo.carta21 = LoadTexture("resources/SM_CartaD.png");
-        todo.carta22 = LoadTexture("resources/SM_CartaE.png");
-        todo.carta23 = LoadTexture("resources/SM_CartaJ.png");
-        todo.carta24 = LoadTexture("resources/SM_CartaM.png");
-        todo.carta25 = LoadTexture("resources/SM_CartaP.png");
-        todo.carta26 = LoadTexture("resources/SM_CartaR.png");
-        todo.carta27 = LoadTexture("resources/SM_CartaS.png");
+        todo2.carta_back = LoadTexture("resources/SM_CartaAtras.png");
+        todo2.carta19 = LoadTexture("resources/SM_CartaA.png");
+        todo2.carta20 = LoadTexture("resources/SM_CartaC.png");
+        todo2.carta21 = LoadTexture("resources/SM_CartaD.png");
+        todo2.carta22 = LoadTexture("resources/SM_CartaE.png");
+        todo2.carta23 = LoadTexture("resources/SM_CartaJ.png");
+        todo2.carta24 = LoadTexture("resources/SM_CartaM.png");
+        todo2.carta25 = LoadTexture("resources/SM_CartaP.png");
+        todo2.carta26 = LoadTexture("resources/SM_CartaR.png");
+        todo2.carta27 = LoadTexture("resources/SM_CartaS.png");
     }
-    return todo;
+    return todo2;
+}
+
+LETRAS_cartas UnloadCartasLETRAS(const char categoria[], LETRAS_cartas abcd)
+{
+    if (strcmp(categoria, "LETRAS") == 0)
+    {
+        UnloadTexture(abcd.carta_back);
+        UnloadTexture(abcd.carta19);
+        UnloadTexture(abcd.carta20);
+        UnloadTexture(abcd.carta21);
+        UnloadTexture(abcd.carta22);
+        UnloadTexture(abcd.carta23);
+        UnloadTexture(abcd.carta24);
+        UnloadTexture(abcd.carta25);
+        UnloadTexture(abcd.carta26);
+        UnloadTexture(abcd.carta27);
+    }
+    return abcd;
+}
+
+COLOR_cartas LoadCartasCOLORES(const char categoria[], COLOR_cartas todo3)
+{
+    if (strcmp(categoria, "COLORES") == 0)
+    {
+        todo3.carta_back = LoadTexture("resources/SM_CartaAtras.png");
+        todo3.carta10 = LoadTexture("resources/SM_CartaAzul.png");
+        todo3.carta11 = LoadTexture("resources/SM_CartaAmarillo.png");
+        todo3.carta12 = LoadTexture("resources/SM_CartaBlanco.png");
+        todo3.carta13 = LoadTexture("resources/SM_CartaCafe.png");
+        todo3.carta14 = LoadTexture("resources/SM_CartaColor.png");
+        todo3.carta15 = LoadTexture("resources/SM_CartaRosa.png");
+        todo3.carta16 = LoadTexture("resources/SM_CartaNegro.png");
+        todo3.carta17 = LoadTexture("resources/SM_CartaRojo.png");
+        todo3.carta18 = LoadTexture("resources/SM_CartaVerde.png");
+    }
+    return todo3;
+}
+
+COLOR_cartas UnloadCartasCOLORES(const char categoria[], COLOR_cartas rainbow)
+{
+    if (strcmp(categoria, "COLORES") == 0)
+    {
+        UnloadTexture(rainbow.carta_back);
+        UnloadTexture(rainbow.carta10);
+        UnloadTexture(rainbow.carta11);
+        UnloadTexture(rainbow.carta12);
+        UnloadTexture(rainbow.carta13);
+        UnloadTexture(rainbow.carta14);
+        UnloadTexture(rainbow.carta15);
+        UnloadTexture(rainbow.carta16);
+        UnloadTexture(rainbow.carta17);
+        UnloadTexture(rainbow.carta18);
+    }
+    return rainbow;
 }
 
 cartas UnloadCartas_b(const char categoria[], cartas todo)
@@ -636,34 +696,6 @@ cartas UnloadCartas_b(const char categoria[], cartas todo)
         UnloadTexture(todo.carta7);
         UnloadTexture(todo.carta8);
         UnloadTexture(todo.carta9);
-    }
-
-    if (strcmp(categoria, "COLORES") == 0)
-    {
-        UnloadTexture(todo.carta_back);
-        UnloadTexture(todo.carta10);
-        UnloadTexture(todo.carta11);
-        UnloadTexture(todo.carta12);
-        UnloadTexture(todo.carta13);
-        UnloadTexture(todo.carta14);
-        UnloadTexture(todo.carta15);
-        UnloadTexture(todo.carta16);
-        UnloadTexture(todo.carta17);
-        UnloadTexture(todo.carta18);
-    }
-
-    if (strcmp(categoria, "LETRAS") == 0)
-    {
-        UnloadTexture(todo.carta_back);
-        UnloadTexture(todo.carta19);
-        UnloadTexture(todo.carta20);
-        UnloadTexture(todo.carta21);
-        UnloadTexture(todo.carta22);
-        UnloadTexture(todo.carta23);
-        UnloadTexture(todo.carta24);
-        UnloadTexture(todo.carta25);
-        UnloadTexture(todo.carta26);
-        UnloadTexture(todo.carta27);
     }
 
     return todo;
@@ -1086,7 +1118,7 @@ JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo,
     return JUEGO_JUGANDO;
 }
 
-Texture2D GetCartaTexture_LETRA(cartas todo2, int num_carta)
+Texture2D GetCartaTexture_LETRA(LETRAS_cartas todo2, int num_carta)
 {
     switch (num_carta)
     {
@@ -1137,7 +1169,7 @@ void iniciar_memo_LETRA(Letras &estruct3)
     }
 
     // Números del 1 al 9
-    int numeros_disponibles[] = {18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27};
+    int numeros_disponibles[] = {19, 20, 21, 22, 23, 24, 25, 26, 27, 19, 20, 21, 22, 23, 24, 25, 26, 27};
 
     // Barajar los números disponibles
     srand((unsigned int)time(NULL));
@@ -1167,7 +1199,7 @@ void iniciar_memo_LETRA(Letras &estruct3)
     }
 }
 
-void LETRAS_memoria(cartas todo2, Letras &estruct3, cargas archivos)
+void LETRAS_memoria(LETRAS_cartas todo2, Letras &estruct3, cargas archivos)
 {
     int ancho = GetScreenWidth();
     int altura = GetScreenHeight();
@@ -1320,7 +1352,7 @@ void LETRAS_memoria(cartas todo2, Letras &estruct3, cargas archivos)
     }
 }
 
-JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos, cartas todo2, Letras &estruct3)
+JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos, LETRAS_cartas todo2, Letras &estruct3)
 {
     DrawTexturePro(
         archivos.backgroundTexture_letras,
@@ -1403,7 +1435,7 @@ JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos, cartas todo2
     return JUEGO_JUGANDO;
 }
 
-Texture2D GetCartaTexture_COLOR(cartas todo3, int num_carta)
+Texture2D GetCartaTexture_COLOR(COLOR_cartas todo3, int num_carta)
 {
     switch (num_carta)
     {
@@ -1485,7 +1517,7 @@ void iniciar_memo_COLOR(_colores &estruct2)
     }
 }
 
-void COLOR_memoria(cartas todo3, _colores &estruct2, cargas archivos)
+void COLOR_memoria(COLOR_cartas todo3, _colores &estruct2, cargas archivos)
 {
     int ancho = GetScreenWidth();
     int altura = GetScreenHeight();
@@ -1638,7 +1670,7 @@ void COLOR_memoria(cartas todo3, _colores &estruct2, cargas archivos)
     }
 }
 
-JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos, cartas todo3, _colores &estruct2)
+JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos, COLOR_cartas todo3, _colores &estruct2)
 {
     DrawTexturePro(
         archivos.backgroundTexture_colores,
@@ -1925,7 +1957,7 @@ int drawcreditos(cargas archivos)
     return 0; // Ningún botón
 }
 
-void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, cartas todo2, cartas todo3, memorama estruct, _colores estruct2, Letras estruct3)
+void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, LETRAS_cartas todo2, COLOR_cartas todo3, memorama estruct, _colores estruct2, Letras estruct3)
 {
     BeginDrawing();
     ClearBackground(RAYWHITE);
