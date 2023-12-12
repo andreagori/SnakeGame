@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include <cmath>
 #include <stdio.h>
+#include <stdlib.h>
 #include <cstdlib> // Necesario para la función srand y rand
 #include <ctime>   // Necesario para la función time
 #include <vector>
@@ -76,13 +77,23 @@ typedef struct memorama
 {
     bool card_state[3][6];
     int cartas[3][6];
-    int prim_carta_fila;
+    int cartas_en_estado_1;  // Contador de cartas en estado 1
+    int max_cartas_estado_1; // Número máximo de cartas permitidas en estado 1
+    // Almacena las coordenadas de la primera carta volteada
     int prim_carta_columna;
+    int prim_carta_fila;
+    // Almacena las coordenadas de la segunda carta volteada
+    int seg_carta_columna;
+    int seg_carta_fila;
+    int paresEncontrados;
+    int prim_carta_filaa;
+    int prim_carta_columnaa;
     int card_reveal_number;
     int carta_1;
     int carta_2;
     int num_fila = 3;
     int num_columna = 6;
+    std::vector<std::pair<int, int>> cartas_con_pares;
 } memorama;
 
 // AQUI IRA EL NUEVO STRUCT PARA CADA TEXTURA DE LAS CARTAS, HACER UNO PARA CADA CATEGORIA. ------------------------------
@@ -106,6 +117,7 @@ cartas LoadCartas_b(const char categoria[], cartas todo);
 cartas UnloadCartas_b(const char categoria[], cartas todo);
 Texture2D GetCartaTexture(cartas todo, int num_carta);
 int contarRepeticiones(memorama &estruct, int numero);
+void voltearCartas(memorama &estruct, int fila, int columna);
 void iniciar_memo(memorama &estruct);
 void memoria(cartas todo, memorama &estruct);
 JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama &estruct);
@@ -639,8 +651,17 @@ Texture2D GetCartaTexture(cartas todo, int num_carta)
 
 void iniciar_memo(memorama &estruct)
 {
-    estruct.prim_carta_columna = -1;
+    // Inicializar las coordenadas de las cartas volteadas
+
     estruct.prim_carta_fila = -1;
+    estruct.prim_carta_columna = -1;
+    estruct.seg_carta_fila = -1;
+    estruct.seg_carta_columna = -1;
+
+    // Inicializar el contador de cartas en estado 1
+    estruct.cartas_en_estado_1 = 0;
+    // Establecer el número máximo de cartas permitidas en estado 1
+    estruct.max_cartas_estado_1 = 2;
 
     // Inicializar todas las cartas como false
     for (int i = 0; i < 3; i++)
@@ -699,14 +720,6 @@ void memoria(cartas todo, memorama &estruct)
 
     Vector2 mouse = GetMousePosition();
 
-    static int cartasVolteadas = 0;
-    static int filaPrimeraCarta = -1;
-    static int columnaPrimeraCarta = -1;
-    static int filaSegundaCarta = -1;
-    static int columnaSegundaCarta = -1;
-
-    bool voltearTodasLasCartas = false;
-
     for (int i = 0; i < fila; i++)
     {
         for (int j = 0; j < columna; j++)
@@ -717,72 +730,90 @@ void memoria(cartas todo, memorama &estruct)
             Rectangle carta = {posx, posy, ajustes, ajuste_altura};
             bool isMouseOverCard = CheckCollisionPointRec(mouse, carta);
 
+            // Chequear clic izquierdo en la carta
+            if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                // Verificar el estado actual de la carta
+                if (!estruct.card_state[i][j] && estruct.cartas_en_estado_1 < estruct.max_cartas_estado_1)
+                {
+                    // Si ya hay una carta volteada, verificar si es la misma
+                    if (estruct.prim_carta_fila != -1 && estruct.prim_carta_columna != -1 &&
+                        (estruct.prim_carta_fila != i || estruct.prim_carta_columna != j))
+                    {
+                        // Verificar si las cartas son iguales
+                        printf("Carta volteada UNO en (%d, %d): %d\n", i, j, estruct.cartas[i][j]);
+                        printf("Carta volteada DOS en (%d, %d): %d\n", estruct.prim_carta_fila, estruct.prim_carta_columna, estruct.cartas[estruct.prim_carta_fila][estruct.prim_carta_columna]);
+                        if (estruct.cartas[i][j] == estruct.cartas[estruct.prim_carta_fila][estruct.prim_carta_columna])
+                        {
+                            // Ambas cartas son iguales, reiniciar las coordenadas de la primera carta
+                            estruct.prim_carta_fila = -1;
+                            estruct.prim_carta_columna = -1;
+                            estruct.seg_carta_fila = -1;
+                            estruct.seg_carta_columna = -1;
+
+                            // No permitir interacción con estas cartas
+                            continue;
+                        }
+                        else
+                        {
+                            // Las cartas no son iguales, esperar para volver a voltearlas
+                            SetMouseCursor(MOUSE_CURSOR_ARROW);
+                        }
+                    }
+                    else
+                    {
+                        // No hay carta volteada previamente, actualizar las coordenadas de la primera carta
+                        estruct.prim_carta_fila = i;
+                        estruct.prim_carta_columna = j;
+                    }
+
+                    // Cambiar el estado de la carta a 1
+                    estruct.card_state[i][j] = true;
+                    estruct.cartas_en_estado_1++;
+
+                    // Verificar si la segunda carta ya está volteada
+                    if (estruct.seg_carta_fila != -1 && estruct.seg_carta_columna != -1)
+                    {
+                        // No permitir interacción con estas cartas
+                        continue;
+                    }
+
+                    // No permitir interacción con la primera carta ya volteada
+                    continue;
+                }
+                else if (estruct.card_state[i][j])
+                {
+                    // Si la carta estaba en estado 1, cambiarla a 0
+                    estruct.card_state[i][j] = false;
+                    estruct.cartas_en_estado_1--;
+
+                    // Reiniciar las coordenadas de la primera y segunda carta
+                    estruct.prim_carta_fila = -1;
+                    estruct.prim_carta_columna = -1;
+                    estruct.seg_carta_fila = -1;
+                    estruct.seg_carta_columna = -1;
+                }
+            }
+
             // Dibujar cartas
             int num_carta = estruct.cartas[i][j];
+            Texture2D currentTexture;
+            if (estruct.card_state[i][j])
+            {
+                currentTexture = GetCartaTexture(todo, num_carta);
+            }
+            else
+            {
+                currentTexture = todo.carta_back;
+            }
+
             DrawTexturePro(
-                (estruct.card_state[i][j]) ? GetCartaTexture(todo, num_carta) : todo.carta_back,
-                (Rectangle){0, 0, (float)GetCartaTexture(todo, num_carta).width, (float)GetCartaTexture(todo, num_carta).height},
+                currentTexture,
+                (Rectangle){0, 0, (float)currentTexture.width, (float)currentTexture.height},
                 carta,
                 (Vector2){0, 0},
                 0.0f,
                 WHITE);
-
-            // Actualizar estado de cartas
-            if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && cartasVolteadas < 2)
-            {
-                if (estruct.card_state[i][j] == false)
-                {
-                    estruct.card_state[i][j] = true;
-                    cartasVolteadas++;
-
-                    if (cartasVolteadas == 1)
-                    {
-                        filaPrimeraCarta = i;
-                        columnaPrimeraCarta = j;
-                    }
-                    else
-                    {
-                        if (cartasVolteadas == 2)
-                        {
-                            filaSegundaCarta = i;
-                            columnaSegundaCarta = j;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (cartasVolteadas == 2)
-    {
-        if (estruct.cartas[filaPrimeraCarta][columnaPrimeraCarta] == estruct.cartas[filaSegundaCarta][columnaSegundaCarta])
-        {
-            estruct.card_state[filaPrimeraCarta][columnaPrimeraCarta] = true;
-            estruct.card_state[filaSegundaCarta][columnaSegundaCarta] = true;
-            voltearTodasLasCartas = false;
-            cartasVolteadas = 0;
-        }
-        else
-        {
-            estruct.card_state[filaPrimeraCarta][columnaPrimeraCarta] = false;
-            estruct.card_state[filaSegundaCarta][columnaSegundaCarta] = false;
-            voltearTodasLasCartas = true;
-            cartasVolteadas = 0;
-        }
-    }
-
-    if (voltearTodasLasCartas)
-    {
-
-        for (int i = 0; i < fila; i++)
-        {
-            for (int j = 0; j < columna; j++)
-            {
-                if (estruct.card_state[i][j] == true)
-                {
-                    estruct.card_state[i][j] = false;
-                }
-            }
         }
     }
 }
