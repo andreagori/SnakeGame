@@ -105,6 +105,7 @@ void UnloadContent(cargas archivos, GameScreen currentScreen);
 cartas LoadCartas_b(const char categoria[], cartas todo);
 cartas UnloadCartas_b(const char categoria[], cartas todo);
 Texture2D GetCartaTexture(cartas todo, int num_carta);
+int contarRepeticiones(memorama &estruct, int numero);
 void iniciar_memo(memorama &estruct);
 void memoria(cartas todo, memorama &estruct);
 JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama &estruct);
@@ -636,6 +637,21 @@ Texture2D GetCartaTexture(cartas todo, int num_carta)
     }
 }
 
+// int contarRepeticiones(memorama &estruct, int numero) // CUANDO NO ESTAN ORDENADAS
+// {
+//     int contador = 0;
+
+//     for (int i = 0; i < 3; i++)
+//     {
+//         for (int j = 0; j < 6; j++)
+//         {
+//             contador += (estruct.cartas[i][j] == numero);
+//         }
+//     }
+
+//     return contador;
+// }
+
 void iniciar_memo(memorama &estruct)
 {
     estruct.prim_carta_columna = -1;
@@ -651,11 +667,11 @@ void iniciar_memo(memorama &estruct)
     }
 
     // Números del 1 al 9
-    int numeros_disponibles[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    int numeros_disponibles[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     // Barajar los números disponibles
     srand((unsigned int)time(NULL));
-    for (int i = 8; i > 0; i--)
+    for (int i = 17; i > 0; i--)
     {
         int j = rand() % (i + 1);
         // Intercambiar numeros_disponibles[i] y numeros_disponibles[j]
@@ -664,19 +680,17 @@ void iniciar_memo(memorama &estruct)
         numeros_disponibles[j] = temp;
     }
 
-    // Asignar aleatoriamente las cartas y sus duplicados
+    // Asignar aleatoriamente las cartas
     int indice = 0;
     for (int i = 0; i < 3; i++)
     {
-        for (int j = 0; j < 6; j += 2)
+        for (int j = 0; j < 6; j++)
         {
-            // Asignar el valor a las cartas y su duplicado
+            // Asignar el valor a la carta
             estruct.cartas[i][j] = numeros_disponibles[indice];
-            estruct.cartas[i][j + 1] = rand() % 9 + 1;
-            // busqueda secuencial.
 
             // Imprimir las cartas asignadas
-            printf("Cartas asignadas en (%d, %d): %d, %d\n", i, j, estruct.cartas[i][j], estruct.cartas[i][j + 1]);
+            // printf("Carta asignada en (%d, %d): %d\n", i, j, estruct.cartas[i][j]);
 
             indice++;
         }
@@ -739,7 +753,7 @@ void memoria(cartas todo, memorama &estruct)
                         (Vector2){0, 0},
                         0.0f,
                         WHITE);
-                    printf("POSICION: %d, %d\n", i, j);
+                    // printf("POSICION: %d, %d\n", i, j);
                 }
             }
         }
