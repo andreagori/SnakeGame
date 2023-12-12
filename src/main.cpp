@@ -637,21 +637,6 @@ Texture2D GetCartaTexture(cartas todo, int num_carta)
     }
 }
 
-// int contarRepeticiones(memorama &estruct, int numero) // CUANDO NO ESTAN ORDENADAS
-// {
-//     int contador = 0;
-
-//     for (int i = 0; i < 3; i++)
-//     {
-//         for (int j = 0; j < 6; j++)
-//         {
-//             contador += (estruct.cartas[i][j] == numero);
-//         }
-//     }
-
-//     return contador;
-// }
-
 void iniciar_memo(memorama &estruct)
 {
     estruct.prim_carta_columna = -1;
@@ -747,11 +732,11 @@ void memoria(cartas todo, memorama &estruct)
             {
                 if (estruct.card_state[i][j] == false)
                 {
+                    estruct.card_state[i][j] = true;
                     cartasVolteadas++;
 
                     if (cartasVolteadas == 1)
                     {
-                        estruct.card_state[i][j] = true;
                         filaPrimeraCarta = i;
                         columnaPrimeraCarta = j;
                     }
@@ -759,7 +744,6 @@ void memoria(cartas todo, memorama &estruct)
                     {
                         if (cartasVolteadas == 2)
                         {
-                            estruct.card_state[i][j] = true;
                             filaSegundaCarta = i;
                             columnaSegundaCarta = j;
                         }
