@@ -1,6 +1,8 @@
 #include "raylib.h"
 #include <cmath>
 #include <stdio.h>
+#include <cstdlib> // Necesario para la función srand y rand
+#include <ctime>   // Necesario para la función time
 #include <vector>
 #include <time.h>
 #include <algorithm>
@@ -648,28 +650,35 @@ void iniciar_memo(memorama &estruct)
         }
     }
 
-    int total_cartas = 3 * 6;
-    int cartas_disponibles[total_cartas];
+    // Números del 1 al 9
+    int numeros_disponibles[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-    // Llenar array con números del 1 al total_cartas
-    for (int i = 0; i < total_cartas; i++)
+    // Barajar los números disponibles
+    srand((unsigned int)time(NULL));
+    for (int i = 8; i > 0; i--)
     {
-        cartas_disponibles[i] = i + 1;
+        int j = rand() % (i + 1);
+        // Intercambiar numeros_disponibles[i] y numeros_disponibles[j]
+        int temp = numeros_disponibles[i];
+        numeros_disponibles[i] = numeros_disponibles[j];
+        numeros_disponibles[j] = temp;
     }
 
     // Asignar aleatoriamente las cartas y sus duplicados
+    int indice = 0;
     for (int i = 0; i < 3; i++)
     {
         for (int j = 0; j < 6; j += 2)
         {
-            int indice = rand() % total_cartas;
-            estruct.cartas[i][j] = cartas_disponibles[indice];
-            estruct.cartas[i][j + 1] = cartas_disponibles[indice];
+            // Asignar el valor a las cartas y su duplicado
+            estruct.cartas[i][j] = numeros_disponibles[indice];
+            estruct.cartas[i][j + 1] = rand() % 9 + 1;
+            // busqueda secuencial.
 
-            // Eliminar la carta seleccionada y su duplicado
-            cartas_disponibles[indice] = cartas_disponibles[total_cartas - 1];
-            cartas_disponibles[total_cartas - 1] = cartas_disponibles[total_cartas - 2];
-            total_cartas -= 2;
+            // Imprimir las cartas asignadas
+            printf("Cartas asignadas en (%d, %d): %d, %d\n", i, j, estruct.cartas[i][j], estruct.cartas[i][j + 1]);
+
+            indice++;
         }
     }
 }
