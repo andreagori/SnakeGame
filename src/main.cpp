@@ -1,6 +1,8 @@
 #include "raylib.h"
 #include <cmath>
+#include <stdio.h>
 #include <vector>
+#include <time.h>
 #include <algorithm>
 #include <string.h>
 
@@ -70,16 +72,15 @@ typedef struct cartas
 
 typedef struct memorama
 {
-    bool state;
-    int firstCardCol;
-    int firstCardRow;
-    bool cardSelected;
-    int selectedCardIndex;
-    int cardsMatched;
-    int numRows = 3;
-    int numCols = 6;
-    int cardStates[3][6];
-    int cards[3][6];
+    bool card_state[3][6];
+    int cartas[3][6];
+    int prim_carta_fila;
+    int prim_carta_columna;
+    int card_reveal_number;
+    int carta_1;
+    int carta_2;
+    int num_fila = 3;
+    int num_columna = 6;
 } memorama;
 
 // AQUI IRA EL NUEVO STRUCT PARA CADA TEXTURA DE LAS CARTAS, HACER UNO PARA CADA CATEGORIA. ------------------------------
@@ -92,20 +93,19 @@ int screenHeight = GetMonitorHeight(0);
 // >> CARGAS ARCHIVOS Y MENUS.
 cargas LoadContent(const char pantalla[], cargas archivos);
 int drawcreditos(cargas archivos);
-void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, memorama &memo);
+void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, memorama estruct);
 void ToggleFullscreenAndResize();
 bool musica(bool musicToggle, bool &musicPaused, Music &musica_fondo);
 int drawinicio(cargas archivos);
 int drawjugar(GameScreen currentScreen, cargas archivos);
 void UnloadContent(cargas archivos, GameScreen currentScreen);
-// >> JUEGO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-void inicializarMemorama(memorama *estruct);
-void juego_basico(cartas todo, memorama *estruct);
+// >> JUEGO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 cartas LoadCartas_b(const char categoria[], cartas todo);
 cartas UnloadCartas_b(const char categoria[], cartas todo);
-Texture2D GetCartaTexture(cartas todo, int numeroCarta);
-JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama *estruct);
-void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, memorama &memo);
+Texture2D GetCartaTexture(cartas todo, int num_carta);
+void iniciar_memo(memorama &estruct);
+void memoria(cartas todo, memorama &estruct);
+JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama &estruct);
 JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos);
 JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos);
 
@@ -132,9 +132,10 @@ int main(void)
 
     // JUEGO
     cartas todo;
-    cartas basico;
-    memorama memo;
-    basico = LoadCartas_b("BASICO", basico);
+    memorama estruct;
+    srand(time(NULL));
+    iniciar_memo(estruct);
+    todo = LoadCartas_b("BASICO", todo);
     PlayMusicStream(archivos.musica_fondo);
     //--------------------------------------------------------------------------------------
 
@@ -228,8 +229,7 @@ int main(void)
         {
             // Llama a la función jugar_basico y obtén el estado del juego
             // BOTONES DE CARTAS FINAL -------------------------------------------------
-            inicializarMemorama(&memo);
-            JuegoEstado estadoJuego = jugar_basico(currentScreen, archivos, basico, &memo);
+            JuegoEstado estadoJuego = jugar_basico(currentScreen, archivos, todo, estruct);
 
             // Verifica el estado del juego
             if (estadoJuego == JUEGO_REGRESAR_MENU)
@@ -328,14 +328,14 @@ int main(void)
         }
         // Draw
         //----------------------------------------------------------------------------------
-        menudraw(currentScreen, archivos, basico, memo);
+        menudraw(currentScreen, archivos, todo, estruct);
         UpdateMusicStream(archivos.musica_fondo);
     }
 
     // TODO: Unload all loaded data (textures, fonts, audio) here!
     UnloadContent(archivos, currentScreen);
     UnloadContent(archivos, nextScreen);
-    UnloadCartas_b("BASICO", basico);
+    UnloadCartas_b("BASICO", todo);
     UnloadSound(archivos.buttonSound);
     UnloadMusicStream(archivos.musica_fondo);
     UnloadImage(icon);
@@ -606,10 +606,9 @@ int drawinicio(cargas archivos)
     return 0; // Ningún botón
 }
 
-Texture2D GetCartaTexture(cartas todo, int numeroCarta)
+Texture2D GetCartaTexture(cartas todo, int num_carta)
 {
-    // Dependiendo del número de la carta, devuelve la textura correspondiente
-    switch (numeroCarta)
+    switch (num_carta)
     {
     case 1:
         return todo.carta1;
@@ -635,134 +634,110 @@ Texture2D GetCartaTexture(cartas todo, int numeroCarta)
     }
 }
 
-void inicializarMemorama(memorama *estruct)
+void iniciar_memo(memorama &estruct)
 {
-    // Initialize the firstCardRow and firstCardCol to -1
-    estruct->firstCardRow = -1;
-    estruct->firstCardCol = -1;
+    estruct.prim_carta_columna = -1;
+    estruct.prim_carta_fila = -1;
 
-    int cartaActual = 1;
-
-    // Iterar sobre cada fila y columna
-    for (int row = 0; row < 3; ++row)
+    // Inicializar todas las cartas como false
+    for (int i = 0; i < 3; i++)
     {
-        for (int col = 0; col < 6; ++col)
+        for (int j = 0; j < 6; j++)
         {
-            // Asignar el valor de la carta actual y avanzar al siguiente
-            estruct->cards[row][col] = cartaActual;
-            cartaActual++;
+            estruct.card_state[i][j] = false;
+        }
+    }
+
+    int total_cartas = 3 * 6;
+    int cartas_disponibles[total_cartas];
+
+    // Llenar array con números del 1 al total_cartas
+    for (int i = 0; i < total_cartas; i++)
+    {
+        cartas_disponibles[i] = i + 1;
+    }
+
+    // Asignar aleatoriamente las cartas y sus duplicados
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 6; j += 2)
+        {
+            int indice = rand() % total_cartas;
+            estruct.cartas[i][j] = cartas_disponibles[indice];
+            estruct.cartas[i][j + 1] = cartas_disponibles[indice];
+
+            // Eliminar la carta seleccionada y su duplicado
+            cartas_disponibles[indice] = cartas_disponibles[total_cartas - 1];
+            cartas_disponibles[total_cartas - 1] = cartas_disponibles[total_cartas - 2];
+            total_cartas -= 2;
         }
     }
 }
 
-// Función para manejar el juego básico del memorama
-void juego_basico(cartas todo, memorama *estruct)
+void memoria(cartas todo, memorama &estruct)
 {
-    // // Obtener las dimensiones de la ventana
-    // int screenWidth = GetScreenWidth();
-    // int screenHeight = GetScreenHeight();
 
-    // // Definir el número de filas y columnas
-    // int numRows = estruct->numRows;
-    // int numCols = estruct->numCols;
+    int ancho = GetScreenWidth();
+    int altura = GetScreenHeight();
 
-    // // Calcular el espaciado entre las cartas
-    // float paddingX = 10.0f;
-    // float paddingY = 10.0f;
+    int fila = estruct.num_fila;
+    int columna = estruct.num_columna;
 
-    // // Definir la relación de aspecto deseada (altura / anchura)
-    // float aspectRatio = 179.0f / 130.0f; // Ajusta esto según la relación de aspecto de tus cartas
+    float espacioX = 10.0f;
+    float espacioY = 10.0f;
 
-    // // Ajustar el tamaño de las cartas
-    // float adjustedCardWidth = 130.0f; // Ajusta el valor según lo que desees
-    // float cardHeight = adjustedCardWidth * aspectRatio;
+    float aspecto = 179.0f / 130.0f;
+    float ajustes = 130.0f;
+    float ajuste_altura = ajustes * aspecto;
 
-    // // Calcular la posición inicial para centrar la cuadrícula en la pantalla
-    // float startX = (screenWidth - numCols * (adjustedCardWidth + paddingX) + paddingX) / 2.0f;
-    // float startY = (screenHeight - numRows * (cardHeight + paddingY) + paddingY) / 2.0f;
+    Vector2 mouse = GetMousePosition();
 
-    // // Obtener la posición del mouse
-    // Vector2 mousePosition = GetMousePosition();
+    for (int i = 0; i < fila; i++)
+    {
+        for (int j = 0; j < columna; j++)
+        {
+            float posx = (ancho - columna * (ajustes + espacioX) + espacioX) / 2 + j * (ajustes + espacioX);
+            float posy = (altura - fila * (ajuste_altura + espacioY) + espacioY) / 2 + i * (ajuste_altura + espacioY);
 
-    // for (int row = 0; row < numRows; ++row)
-    // {
-    //     for (int col = 0; col < numCols; ++col)
-    //     {
-    //         // Calcular la posición de la carta
-    //         float xPos = startX + col * (adjustedCardWidth + paddingX);
-    //         float yPos = startY + row * (cardHeight + paddingY);
+            // CREAR UN RECTANGULO PARA CADA CARTA.
+            Rectangle carta = {posx, posy, ajustes, ajuste_altura};
 
-    //         // Crear un rectángulo para la carta
-    //         Rectangle cardRect = {xPos, yPos, adjustedCardWidth, cardHeight};
+            // VERIFICAR SI EL MOUSE ESTA ENCIMA DE LA CARTA.
+            bool isMouseOverCard = CheckCollisionPointRec(mouse, carta);
 
-    //         // Verificar si el mouse está sobre la carta
-    //         bool isMouseOverCard = CheckCollisionPointRec(mousePosition, cardRect);
+            // DIBUJAR CARTAS
+            int num_carta = estruct.cartas[i][j];
+            DrawTexturePro(
+                (estruct.card_state[i][j]) ? GetCartaTexture(todo, num_carta) : todo.carta_back,
+                (Rectangle){0, 0, (float)GetCartaTexture(todo, num_carta).width, (float)GetCartaTexture(todo, num_carta).height},
+                carta,
+                (Vector2){0, 0},
+                0.0f,
+                WHITE);
 
-    //         // Actualizar el estado de la carta
-    //         if (isMouseOverCard && IsMouseButtonDown(MOUSE_LEFT_BUTTON) && estruct->cardStates[row][col] == 0)
-    //         {
-    //             estruct->cardStates[row][col] = 1;
+            // ACTUALIZAR ESTADO DE CARTAS //
+            if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                estruct.card_state[i][j] = true;
 
-    //             // Si esta es la primera carta del par
-    //             if (estruct->firstCardRow == -1 && estruct->firstCardCol == -1)
-    //             {
-    //                 // Guardar la posición de la primera carta
-    //                 estruct->firstCardRow = row;
-    //                 estruct->firstCardCol = col;
-    //             }
-    //             else
-    //             {
-    //                 // Esta es la segunda carta del par
-
-    //                 // Si las cartas no coinciden
-    //                 if (estruct->cards[row][col] != estruct->cards[estruct->firstCardRow][estruct->firstCardCol])
-    //                 {
-    //                     // Ocultar las cartas
-    //                     estruct->cardStates[row][col] = 0;
-    //                     estruct->cardStates[estruct->firstCardRow][estruct->firstCardCol] = 0;
-    //                 }
-
-    //                 // Restablecer la posición de la primera carta
-    //                 estruct->firstCardRow = -1;
-    //                 estruct->firstCardCol = -1;
-    //             }
-    //         }
-    //         else if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON) && !CheckCollisionPointRec(mousePosition, cardRect))
-    //         {
-    //             // Resetear el estado de la carta solo si el botón izquierdo no está siendo presionado
-    //             // y el mouse no está sobre ninguna carta
-    //             estruct->cardStates[row][col] = 0;
-    //         }
-
-    //         // Dibujar la carta
-    //         if (estruct->cardStates[row][col] == 0)
-    //         {
-    //             // Si la carta está oculta, dibujar la textura de la carta oculta
-    //             DrawTexturePro(
-    //                 todo.carta_back,
-    //                 (Rectangle){0, 0, (float)todo.carta_back.width, (float)todo.carta_back.height},
-    //                 cardRect,
-    //                 (Vector2){0, 0},
-    //                 0.0f,
-    //                 WHITE);
-    //         }
-    //         else
-    //         {
-    //             // Si la carta está revelada, dibujar la textura de la carta correspondiente
-    //             int numeroCarta = (row * numCols + col) % (numRows * numCols / 2) + 1; // Asigna números del 1 al (numRows * numCols / 2) a las cartas
-    //             DrawTexturePro(
-    //                 GetCartaTexture(todo, numeroCarta),
-    //                 (Rectangle){0, 0, (float)GetCartaTexture(todo, numeroCarta).width, (float)GetCartaTexture(todo, numeroCarta).height},
-    //                 cardRect,
-    //                 (Vector2){0, 0},
-    //                 0.0f,
-    //                 WHITE);
-    //         }
-    //     }
-    // }
+                // DIBUJAR LA CARTA DE ATRAS
+                if (!estruct.card_state[i][j] == false)
+                {
+                    DrawTexturePro(
+                        todo.carta_back,
+                        (Rectangle){0, 0, (float)todo.carta_back.width, (float)todo.carta_back.height},
+                        carta,
+                        (Vector2){0, 0},
+                        0.0f,
+                        WHITE);
+                    printf("POSICION: %d, %d\n", i, j);
+                }
+            }
+        }
+    }
 }
 
-JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama *estruct)
+JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama &estruct)
 {
     DrawTexturePro(
         archivos.backgroundTexture_basico,
@@ -787,90 +762,6 @@ JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo,
     bool isMouseOverButton2 = CheckCollisionPointRec(GetMousePosition(), buttonRect2);
     bool isMouseOverButton3 = CheckCollisionPointRec(GetMousePosition(), buttonRect3);
     bool isMouseOverButton4 = CheckCollisionPointRec(GetMousePosition(), buttonRect4);
-
-    // Obtener las dimensiones de la ventana
-    int screenWidth = GetScreenWidth();
-    int screenHeight = GetScreenHeight();
-
-    // Definir el número de filas y columnas
-    int numRows = estruct->numRows;
-    int numCols = estruct->numCols;
-
-    // Calcular el espaciado entre las cartas
-    float paddingX = 10.0f;
-    float paddingY = 10.0f;
-
-    // Definir la relación de aspecto deseada (altura / anchura)
-    float aspectRatio = 179.0f / 130.0f; // Ajusta esto según la relación de aspecto de tus cartas
-
-    // Ajustar el tamaño de las cartas
-    float adjustedCardWidth = 130.0f; // Ajusta el valor según lo que desees
-    float cardHeight = adjustedCardWidth * aspectRatio;
-
-    // Calcular la posición inicial para centrar la cuadrícula en la pantalla
-    float startX = (screenWidth - numCols * (adjustedCardWidth + paddingX) + paddingX) / 2.0f;
-    float startY = (screenHeight - numRows * (cardHeight + paddingY) + paddingY) / 2.0f;
-
-    // Obtener la posición del mouse
-    Vector2 mousePosition = GetMousePosition();
-
-    for (int row = 0; row < numRows; ++row)
-    {
-        for (int col = 0; col < numCols; ++col)
-        {
-            // Calcular la posición de la carta
-            float xPos = startX + col * (adjustedCardWidth + paddingX);
-            float yPos = startY + row * (cardHeight + paddingY);
-
-            // Crear un rectángulo para la carta
-            Rectangle cardRect = {xPos, yPos, adjustedCardWidth, cardHeight};
-
-            // Verificar si el mouse está sobre la carta
-            bool isMouseOverCard = CheckCollisionPointRec(mousePosition, cardRect);
-
-            // Actualizar el estado de la carta
-            if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && estruct->cardStates[row][col] == 0)
-            {
-                // Cambiar el estado de la carta a 1
-                estruct->cardStates[row][col] = 1;
-
-                // Dibujar la carta revelada directamente
-                int numeroCarta = (row * numCols + col) % (numRows * numCols / 2) + 1;
-                DrawTexturePro(
-                    GetCartaTexture(todo, numeroCarta),
-                    (Rectangle){0, 0, (float)GetCartaTexture(todo, numeroCarta).width, (float)GetCartaTexture(todo, numeroCarta).height},
-                    cardRect,
-                    (Vector2){0, 0},
-                    0.0f,
-                    WHITE);
-            }
-
-            // Dibujar la carta
-            if (estruct->cardStates[row][col] == 0)
-            {
-                // Si la carta está oculta, dibujar la textura de la carta oculta
-                DrawTexturePro(
-                    todo.carta_back,
-                    (Rectangle){0, 0, (float)todo.carta_back.width, (float)todo.carta_back.height},
-                    cardRect,
-                    (Vector2){0, 0},
-                    0.0f,
-                    WHITE);
-            }
-            else
-            {
-                // Si la carta está revelada, dibujar la textura de la carta correspondiente
-                int numeroCarta = (row * numCols + col) % (numRows * numCols / 2) + 1; // Asigna números del 1 al (numRows * numCols / 2) a las cartas
-                DrawTexturePro(
-                    GetCartaTexture(todo, numeroCarta),
-                    (Rectangle){0, 0, (float)GetCartaTexture(todo, numeroCarta).width, (float)GetCartaTexture(todo, numeroCarta).height},
-                    cardRect,
-                    (Vector2){0, 0},
-                    0.0f,
-                    WHITE);
-            }
-        }
-    }
 
     // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
     if (isMouseOverButton2)
@@ -906,6 +797,8 @@ JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo,
     DrawTexturePro(archivos.buttonTexture2, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture2.width), static_cast<float>(archivos.buttonTexture2.height)}, (Rectangle){buttonPosition2.x, buttonPosition2.y, buttonRect2.width, buttonRect2.height}, (Vector2){buttonRect2.width / 2, buttonRect2.height / 2}, 0.0f, WHITE);
     DrawTexturePro(archivos.buttonTexture3, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture3.width), static_cast<float>(archivos.buttonTexture3.height)}, (Rectangle){buttonPosition3.x, buttonPosition3.y, buttonRect3.width, buttonRect3.height}, (Vector2){buttonRect3.width / 2, buttonRect3.height / 2}, 0.0f, WHITE);
     DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
+
+    memoria(todo, estruct);
 
     /* VERIFICAR SI SE HIZO CLIC EN EL BOTÓN */
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -1296,7 +1189,7 @@ int drawcreditos(cargas archivos)
     return 0; // Ningún botón
 }
 
-void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, memorama &memo)
+void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, memorama estruct)
 {
     BeginDrawing();
     ClearBackground(RAYWHITE);
@@ -1320,7 +1213,7 @@ void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, memorama &
     }
     case JUGAR_BASICO:
     {
-        jugar_basico(currentScreen, archivos, todo, &memo);
+        jugar_basico(currentScreen, archivos, todo, estruct);
         break;
     }
     case JUGAR_LETRAS:
