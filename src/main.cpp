@@ -111,7 +111,6 @@ int main(void)
         {
             DrawMenu(assets, currentScreen);
         }
-
     }
     unload(assets);
     UnloadImage(icon);
@@ -253,5 +252,10 @@ void Drawgame(Snake *snake, Apple *apple, int startX, int startY)
     drawSnake(snake, 15, 15, 360, 360);
     drawApple(apple, snake->head, 15, 15, 360, 360, cellHeight, cellWidth, startX, startY);
 
+    // Draw the score
+    char scoreStr[50];
+    sprintf(scoreStr, "Score: %i", snake->size);
+    // Dibuja el puntaje
+    DrawText(scoreStr, 10, 430, 20, YELLOW);
     EndDrawing();
 }

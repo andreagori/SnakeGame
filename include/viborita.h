@@ -215,11 +215,11 @@ void drawSnake(Snake *snake, int height_cellsnumber, int width_cellsnumber, int 
     int cellWidth = gridWidth / width_cellsnumber;
     int cellHeight = gridHeight / height_cellsnumber;
 
-    // Calcula el punto de inicio para dibujar la cuadrícula, en el medio.
+    // Calculate the starting point to draw the grid, in the middle. 
     int startX = (GetScreenWidth() - gridWidth) / 2;
     int startY = (GetScreenHeight() - gridHeight) / 2;
 
-    // Verifica las pulsaciones de teclas fuera del bucle
+    // Check key inputs to change the direction of the snake.
     if (IsKeyPressed(KEY_RIGHT))
     {
         snake->direction = RIGHT;
