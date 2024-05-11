@@ -1,2028 +1,266 @@
-#include "raylib.h"
-#include <cmath>
-#include <stdio.h>
-#include <stdlib.h>
-#include <cstdlib> // Necesario para la función srand y rand
-#include <ctime>   // Necesario para la función time
-#include <vector>
-#include <time.h>
-#include <algorithm>
-#include <string.h>
+/*******************************************************************************************
+ *
+ *   raylib game - snake.
+ *
+ *   Example originally created with raylib 1.5, last time updated with raylib 3.0
+ *
+ *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+ *   BSD-like license that allows static linking with closed source software
+ *
+ *   Copyright (c) 2016-2024 Ramon Santamaria (@raysan5)
+ *
+ ********************************************************************************************/
+// LIBRERIAS
+#include "viborita.h"
 
-// TYPEDEF PARA SUBMENUS Y MENUS.
+// ESTRUCTURAS Y DEFINES.
+#define screenWidth 450
+#define screenHeight 450
 
-typedef enum jugarscreen
-{
-    BASICO,
-    LETRAS,
-    COLORES,
-} jugarscreen;
-
-// ESTE TYPEDEF ME AYUDA CON EL ESTADO DEL JUEGO, SI ESTA JUGANDO O SI REGRESA AL MENU ANTERIOR. ------------------------------
-typedef enum JuegoEstado
-{
-    JUEGO_JUGANDO,
-    JUEGO_REGRESAR_MENU,
-    MUSICA,
-    FULLSCREEN,
-} JuegoEstado;
-
-// ESTE TYPEDEF ME AYUDA CON LOS ESTADOS DE LA PANTALLA, SI ESTA EN EL MENU, JUGANDO, CREDITOS, ETC. TAMBIEN CON JUGAR_... BASICAMENTE JUNTO EL PRIMER TYPEDEF CON ESTE.
+// PANTALLAS
 typedef enum GameScreen
 {
-    INICIO = 0,
-    JUGAR,
-    CREDITOS,
-    JUGAR_BASICO,
-    JUGAR_LETRAS,
-    JUGAR_COLORES,
+    MENU,
+    GAME,
 } GameScreen;
 
-// STRUCT PARA CARGAR LOS ARCHIVOS DE LAS PANTALLAS. ------------------------------
-typedef struct cargas
+typedef struct files
 {
-    Texture2D backgroundTexture;
-    Texture2D backgroundTexture_creditos;
-    Texture2D backgroundTexture_basico;
-    Texture2D backgroundTexture_letras;
-    Texture2D backgroundTexture_colores;
-    Sound buttonSound;
-    Sound cardsound;
-    Texture2D buttonTextureA;
-    Texture2D buttonTextureB;
-    Texture2D buttonTextureC;
-    Texture2D buttonTextureD;
-    Texture2D buttonTextureE;
-    Texture2D buttonTexture1;
-    Texture2D buttonTexture2;
-    Texture2D buttonTexture3;
-    Texture2D buttonTexture4;
-    Music musica_fondo;
-    Font font;
-} cargas;
+    Texture2D background;
+} files;
 
-typedef struct cartas
-{
-    Texture2D carta_back;
-    Texture2D carta1;
-    Texture2D carta2;
-    Texture2D carta3;
-    Texture2D carta4;
-    Texture2D carta5;
-    Texture2D carta6;
-    Texture2D carta7;
-    Texture2D carta8;
-    Texture2D carta9;
+// DECLARACION DE FUNCIONES
 
-} cartas;
+files load(files assets);
+void unload(files assets);
+void animetext(const char *texto, int fontsize, int textWidth, int textHeight, files assets);
+void grid(int height, int weight);
+void DrawMenu(files assets, GameScreen pantalla);
+void Drawgame(Snake *snake, Apple *apple, int startX, int startY);
 
-typedef struct COLOR_cartas
-{
-    // COLORES
-    Texture2D carta_back;
-    Texture2D carta10;
-    Texture2D carta11;
-    Texture2D carta12;
-    Texture2D carta13;
-    Texture2D carta14;
-    Texture2D carta15;
-    Texture2D carta16;
-    Texture2D carta17;
-    Texture2D carta18;
-} COLOR_cartas;
-
-typedef struct LETRAS_cartas
-{
-    // LETRAS
-    Texture2D carta_back;
-    Texture2D carta19;
-    Texture2D carta20;
-    Texture2D carta21;
-    Texture2D carta22;
-    Texture2D carta23;
-    Texture2D carta24;
-    Texture2D carta25;
-    Texture2D carta26;
-    Texture2D carta27;
-} LETRAS_cartas;
-
-typedef struct memorama
-{
-    bool card_state[3][6];
-    int cartas[3][6];
-    int cartas_en_estado_1;  // Contador de cartas en estado 1
-    int max_cartas_estado_1; // Número máximo de cartas permitidas en estado 1
-    // Almacena las coordenadas de la primera carta volteada
-    int prim_carta_columna;
-    int prim_carta_fila;
-    // Almacena las coordenadas de la segunda carta volteada
-    int seg_carta_columna;
-    int seg_carta_fila;
-    int paresEncontrados;
-    int prim_carta_filaa;
-    int prim_carta_columnaa;
-    int card_reveal_number;
-    int num_fila = 3;
-    int num_columna = 6;
-} memorama;
-
-typedef struct _colores
-{
-    bool card_state[3][6];
-    int cartas[3][6];
-    int cartas_en_estado_1;  // Contador de cartas en estado 1
-    int max_cartas_estado_1; // Número máximo de cartas permitidas en estado 1
-    // Almacena las coordenadas de la primera carta volteada
-    int prim_carta_columna;
-    int prim_carta_fila;
-    // Almacena las coordenadas de la segunda carta volteada
-    int seg_carta_columna;
-    int seg_carta_fila;
-    int paresEncontrados;
-    int prim_carta_filaa;
-    int prim_carta_columnaa;
-    int card_reveal_number;
-    int num_fila = 3;
-    int num_columna = 6;
-} _colores;
-
-typedef struct Letras
-{
-    bool card_state[3][6];
-    int cartas[3][6];
-    int cartas_en_estado_1;  // Contador de cartas en estado 1
-    int max_cartas_estado_1; // Número máximo de cartas permitidas en estado 1
-    // Almacena las coordenadas de la primera carta volteada
-    int prim_carta_columna;
-    int prim_carta_fila;
-    // Almacena las coordenadas de la segunda carta volteada
-    int seg_carta_columna;
-    int seg_carta_fila;
-    int paresEncontrados;
-    int prim_carta_filaa;
-    int prim_carta_columnaa;
-    int card_reveal_number;
-    int num_fila = 3;
-    int num_columna = 6;
-} Letras;
-
-// AQUI IRA EL NUEVO STRUCT PARA CADA TEXTURA DE LAS CARTAS, HACER UNO PARA CADA CATEGORIA. ------------------------------
-
-// SACAR LA RESOLUCION DEL MONITOR
-int screenWidth = GetMonitorWidth(0);
-int screenHeight = GetMonitorHeight(0);
-
-// PROTOTIPOS DE FUNCIONES ------------------------------
-// >> CARGAS ARCHIVOS Y MENUS.
-cargas LoadContent(const char pantalla[], cargas archivos);
-int drawcreditos(cargas archivos);
-void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, LETRAS_cartas todo2, COLOR_cartas todo3, memorama estruct, _colores estruct2, Letras estruct3);
-void ToggleFullscreenAndResize();
-bool musica(bool musicToggle, bool &musicPaused, Music &musica_fondo);
-int drawinicio(cargas archivos);
-int drawjugar(GameScreen currentScreen, cargas archivos);
-void UnloadContent(cargas archivos, GameScreen currentScreen);
-// >> JUEGO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-cartas LoadCartas_b(const char categoria[], cartas todo);
-cartas UnloadCartas_b(const char categoria[], cartas todo);
-// >> JUEGO BASICO -----------------------------------------
-Texture2D GetCartaTexture(cartas todo, int num_carta);
-void iniciar_memo(memorama &estruct);
-void memoria(cartas todo, memorama &estruct, cargas archivos);
-JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama &estruct);
-// >> JUEGO LETRAS -----------------------------------------
-LETRAS_cartas LoadCartasLETRAS(const char categoria[], LETRAS_cartas todo2);
-Texture2D GetCartaTexture_LETRA(LETRAS_cartas todo2, int num_carta);
-void iniciar_memo_LETRA(Letras &estruct3);
-void LETRAS_memoria(LETRAS_cartas todo2, Letras &estruct3, cargas archivos);
-JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos, LETRAS_cartas todo2, Letras &estruct3);
-LETRAS_cartas UnloadCartasLETRAS(const char categoria[], LETRAS_cartas todo2);
-// >> JUEGO COLORES -----------------------------------------
-COLOR_cartas LoadCartasCOLORES(const char categoria[], COLOR_cartas todo3);
-Texture2D GetCartaTexture_COLOR(COLOR_cartas todo3, int num_carta);
-void iniciar_memo_COLOR(_colores &estruct2);
-void COLOR_memoria(COLOR_cartas todo3, _colores &estruct2, cargas archivos);
-JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos, COLOR_cartas todo3, _colores &estruct2);
-COLOR_cartas UnloadCartasCOLORES(const char categoria[], COLOR_cartas todo3);
-
-// MAIN ------------------------------
+//------------------------------------------------------------------------------------
+// FUNCION INT MAIN.
+//------------------------------------------------------------------------------------
 int main(void)
 {
-    // CREAR LA VENTANA E INICIAR EL AUDIO, Y CARGAR LOS ARCHIVOS.
-    InitWindow(screenWidth, screenHeight, "SIGN MATCH - GAME");
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    InitWindow(screenWidth, screenHeight, "Viboritaz - GAME");
+    SetTargetFPS(60);
     InitAudioDevice();
-    SetTargetFPS(60); // Set desired framerate (frames-per-second)
-    Image icon = LoadImage("resources/SG_ICONO.png");
+
+    Image icon = LoadImage("resources/UABC_ANDREA_VIBORITAZ.png");
     SetWindowIcon(icon);
+    GameScreen currentScreen = MENU;
+    files assets;
+    assets = load(assets);
+    Snake snake;
+    Apple apple;
+    int startX = (screenWidth - 360) / 2;
+    int startY = (screenHeight - 360) / 2;
 
-    // ASIGNAR LAS PANTALLAS A LAS VARIABLES. Y TAMBIEN CARGAR EL SONIDO Y LA MUSICA.
-    GameScreen currentScreen = INICIO;
-    GameScreen nextScreen = INICIO;
-    cargas archivos;
-    archivos.buttonSound = LoadSound("audio/resources/buttonsound.wav");
-    archivos.musica_fondo = LoadMusicStream("audio/resources/fondo.mp3");
-    archivos = LoadContent("MENU", archivos);
-    // BANDERAS DE LA FUNCION PAUSA MUSICA. Y REPRODUCIR LA MUSICA DE FONDO.
-    bool musicPaused = false;
-    bool musicToggle = false;
-
-    // JUEGO
-    cartas todo;
-    LETRAS_cartas todo2;
-    COLOR_cartas todo3;
-    memorama estruct;
-    _colores estruct2;
-    Letras estruct3;
-    srand(time(NULL));
-    iniciar_memo(estruct);
-    iniciar_memo_LETRA(estruct3);
-    iniciar_memo_COLOR(estruct2);
-    PlayMusicStream(archivos.musica_fondo);
+    SetTargetFPS(60); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
-    // MIENTRAS QUE NO SE CIERRE LA VENTANA, SEGUIR EJECUTANDO EL PROGRAMA.
-    while (!WindowShouldClose()) // TE VA A SACAR DEL PROGRAMA CON EL "ESC".
+    // Main game loop
+    while (!WindowShouldClose()) // Detect window close button or ESC key
     {
-        ToggleFullscreenAndResize(); // FUNCION PARA PANTALLA COMPLETA.
-
-        // VARIABLES PARA LOS BOTONES. Y NAVEGAR ENTRE PANTALLAS.
-        int buttonClicked = drawinicio(archivos);
-        int buttonClicked2 = drawjugar(currentScreen, archivos);
-        int buttonClicked3 = drawcreditos(archivos);
-
-        // SWITCH PARA CAMBIAR DE PANTALLAS EN EL JUEGO, Y TAMBIEN PARA CAMBIAR DE PANTALLAS EN EL MENU.
+        // Update
+        //----------------------------------------------------------------------------------
         switch (currentScreen)
         {
-        case INICIO: // AQUI EN ESTA OPCION ESTARA EL MENU.
+        case MENU:
         {
-            if (buttonClicked == 1)
+            if (IsKeyPressed(KEY_ENTER))
             {
-                // SI SE PRESIONA EL BOTON 1, CAMBIAR A LA PANTALLA JUGAR. Y DESCARGAR LOS ARCHIVOS DE LA PANTALLA ANTERIOR. Y CARGAR LOS ARCHIVOS DE LA PANTALLA NUEVA.
-                PlaySound(archivos.buttonSound);
-                currentScreen = JUGAR;
-                UnloadContent(archivos, INICIO);
-                archivos = LoadContent("JUGAR", archivos);
-            }
-            if (buttonClicked == 2)
-            {
-                // SI SE PRESIONA EL BOTON 2, CAMBIAR A LA PANTALLA CREDITOS. Y DESCARGAR LOS ARCHIVOS DE LA PANTALLA ANTERIOR. Y CARGAR LOS ARCHIVOS DE LA PANTALLA NUEVA.
-                PlaySound(archivos.buttonSound);
-                currentScreen = CREDITOS;
-                UnloadContent(archivos, INICIO);
-                archivos = LoadContent("CREDITOS", archivos);
-            }
-            if (IsKeyPressed(KEY_M) || buttonClicked == 4)
-            {
-                // SI SE PRESIONA LA TECLA "M", PAUSAR LA MUSICA.
-                PlaySound(archivos.buttonSound);
-                musicToggle = !musicToggle;
-                musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
-            }
-            if (buttonClicked == 3)
-            {
-                PlaySound(archivos.buttonSound);
-                ToggleFullscreen();
+                initSnake(&snake, 165, 213);
+                initApple(&apple, 360, 360, 15, 15, startX, startY); // Initialize the apple
+                // initApple(&apple, 150, 200);
+                // randomApple(&apple.axisX, &apple.axisY, 15, 15, 360, 360);
+                currentScreen = GAME;
             }
         }
         break;
-        case JUGAR: // AQUI EN ESTA OPCION ESTARA EL SUBMENU DE JUGAR.
+        case GAME:
         {
-            if (buttonClicked2 == 1)
+            if (IsKeyPressed(KEY_TAB))
             {
-                // SI SE PRESIONA EL BOTON 1, CAMBIAR A LA PANTALLA JUGAR_BASICO. Y DESCARGAR LOS ARCHIVOS DE LA PANTALLA ANTERIOR. Y CARGAR LOS ARCHIVOS DE LA PANTALLA NUEVA.
-                PlaySound(archivos.buttonSound);
-                todo = LoadCartas_b("BASICO", todo);
-                currentScreen = JUGAR_BASICO;
-                archivos = LoadContent("JUGAR_BASICO", archivos);
+                currentScreen = MENU;
             }
-            if (buttonClicked2 == 2)
+            if (collisions(&snake, 15, 15, 360, 360) != false)
             {
-                PlaySound(archivos.buttonSound);
-                todo2 = LoadCartasLETRAS("LETRAS", todo2);
-                currentScreen = JUGAR_LETRAS;
-                archivos = LoadContent("JUGAR_LETRAS", archivos);
+                currentScreen = MENU;
+                freeSnake(&snake);
             }
-            if (buttonClicked2 == 3)
+            else
             {
-                PlaySound(archivos.buttonSound);
-                todo3 = LoadCartasCOLORES("COLORES", todo3);
-                currentScreen = JUGAR_COLORES;
-                archivos = LoadContent("JUGAR_COLORES", archivos);
+                if (hasEatenFood(&snake, &apple, 15, 15))
+                {
+                    growSnake(&snake, 15, 15);
+                    initApple(&apple, 360, 360, 15, 15, startX, startY); // Reinitialize the apple
+                }
+                Drawgame(&snake, &apple, startX, startY);
             }
-            if (IsKeyPressed(KEY_DELETE) || buttonClicked2 == 6)
-            {
-                PlaySound(archivos.buttonSound);
-                currentScreen = nextScreen;
-                archivos = LoadContent("MENU", archivos);
-            }
-            if (IsKeyPressed(KEY_M) || buttonClicked2 == 5)
-            {
-                // SI SE PRESIONA LA TECLA "M", PAUSAR LA MUSICA.
-                PlaySound(archivos.buttonSound);
-                musicToggle = !musicToggle;
-                musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
-            }
-            if (buttonClicked2 == 4)
-            {
-                PlaySound(archivos.buttonSound);
-                ToggleFullscreen();
-            }
+            break;
         }
-        break;
-        case JUGAR_BASICO:
+            // Update
+            //----------------------------------------------------------------------------------
+        }
+        // Dibujar la pantalla actual
+        if (currentScreen == MENU)
         {
-            // Llama a la función jugar_basico y obtén el estado del juego
-            // BOTONES DE CARTAS FINAL -------------------------------------------------
-            JuegoEstado estadoJuego = jugar_basico(currentScreen, archivos, todo, estruct);
+            DrawMenu(assets, currentScreen);
+        }
 
-            // Verifica el estado del juego
-            if (estadoJuego == JUEGO_REGRESAR_MENU)
-            {
-                // Regresa al menú
-                PlaySound(archivos.buttonSound);
-                currentScreen = JUGAR;
-                UnloadContent(archivos, JUGAR_BASICO);
-                archivos = LoadContent("JUEGO", archivos);
-            }
-            if (IsKeyPressed(KEY_M) || estadoJuego == MUSICA)
-            {
-                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
-                musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
-            }
-            if (IsKeyPressed(KEY_F) || estadoJuego == FULLSCREEN)
-            {
-                PlaySound(archivos.buttonSound);
-                ToggleFullscreen();
-            }
-            break;
-        }
-        case JUGAR_LETRAS:
-        {
-            JuegoEstado estadoJuego = jugar_letras(currentScreen, archivos, todo2, estruct3);
-            if (estadoJuego == JUEGO_REGRESAR_MENU)
-            {
-                // Regresa al menú
-                PlaySound(archivos.buttonSound);
-                currentScreen = JUGAR;
-                UnloadContent(archivos, JUGAR_LETRAS);
-                archivos = LoadContent("JUEGO", archivos);
-            }
-            if (IsKeyPressed(KEY_M) || estadoJuego == MUSICA)
-            {
-                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
-                musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
-            }
-            if (IsKeyPressed(KEY_F) || estadoJuego == FULLSCREEN)
-            {
-                PlaySound(archivos.buttonSound);
-                ToggleFullscreen();
-            }
-            break;
-        }
-        case JUGAR_COLORES:
-        {
-            JuegoEstado estadoJuego = jugar_colores(currentScreen, archivos, todo3, estruct2);
-            if (estadoJuego == JUEGO_REGRESAR_MENU)
-            {
-                // Regresa al menú
-                PlaySound(archivos.buttonSound);
-                currentScreen = JUGAR;
-                UnloadContent(archivos, JUGAR_COLORES);
-                archivos = LoadContent("JUEGO", archivos);
-            }
-            if (IsKeyPressed(KEY_M) || estadoJuego == MUSICA)
-            {
-                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
-                musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
-            }
-            if (IsKeyPressed(KEY_F) || estadoJuego == FULLSCREEN)
-            {
-                PlaySound(archivos.buttonSound);
-                ToggleFullscreen();
-            }
-            break;
-        }
-        case CREDITOS:
-        {
-            if (!musicPaused) // Only resume the music if it's not supposed to be paused
-            {
-                ResumeMusicStream(archivos.musica_fondo);
-            }
-            if (IsKeyPressed(KEY_DELETE) || buttonClicked3 == 2)
-            {
-                PlaySound(archivos.buttonSound);
-                currentScreen = nextScreen;
-                UnloadContent(archivos, CREDITOS);
-                archivos = LoadContent("MENU", archivos);
-            }
-            if (IsKeyPressed(KEY_M) || buttonClicked3 == 3)
-            {
-                musicToggle = !musicToggle; // Cambiar el estado de musicToggle cada vez que se presiona 'M'
-                musicPaused = musica(musicToggle, musicPaused, archivos.musica_fondo);
-            }
-            if (buttonClicked3 == 1)
-            {
-                PlaySound(archivos.buttonSound);
-                ToggleFullscreen();
-            }
-            break;
-        }
-        default:
-            break;
-        }
-        // Draw
-        //----------------------------------------------------------------------------------
-        menudraw(currentScreen, archivos, todo, todo2, todo3, estruct, estruct2, estruct3);
-        UpdateMusicStream(archivos.musica_fondo);
+        // if (currentScreen == GAME)
+        // {
+        //     Drawgame(&snake, &apple, startX, startY);
+        // }
     }
-
-    // TODO: Unload all loaded data (textures, fonts, audio) here!
-    UnloadContent(archivos, currentScreen);
-    UnloadContent(archivos, nextScreen);
-    UnloadCartas_b("BASICO", todo);
-    UnloadCartasLETRAS("LETRAS", todo2);
-    UnloadCartasCOLORES("COLORES", todo3);
-    UnloadSound(archivos.buttonSound);
-    UnloadMusicStream(archivos.musica_fondo);
+    unload(assets);
     UnloadImage(icon);
-
+    UnloadTexture(apple.appledrawing);
+    freeSnake(&snake);
     CloseWindow(); // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
 }
 
-bool musica(bool musicToggle, bool &musicPaused, Music &musica_fondo)
+files load(files assets)
 {
-    if (musicToggle)
-    {
-        if (IsMusicStreamPlaying(musica_fondo))
-        {
-            PauseMusicStream(musica_fondo);
-            musicPaused = true;
-        }
-        else
-        {
-            ResumeMusicStream(musica_fondo);
-            musicPaused = false;
-        }
-    }
-
-    return musicPaused;
+    assets.background = LoadTexture("resources/UABC_ANDREA_FONDO.png");
+    return assets;
 }
 
-cargas LoadContent(const char pantalla[], cargas archivos)
+void unload(files assets)
 {
-    // Cargar texturas según el nombre de la pantalla
-    if (strcmp(pantalla, "MENU") == 0)
-    {
-        archivos.backgroundTexture = LoadTexture("resources/SM_Pantalla.png");
-        archivos.buttonTextureA = LoadTexture("resources/SM_BotonJugar_1.png");
-        archivos.buttonTextureB = LoadTexture("resources/SM_BotonCreditos.png");
-        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
-        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
-        SetMusicVolume(archivos.musica_fondo, 1.0f);
-    }
-    if (strcmp(pantalla, "JUGAR") == 0)
-    {
-        archivos.backgroundTexture = LoadTexture("resources/SM_PantallaJugar.png");
-        archivos.buttonTextureC = LoadTexture("resources/SM_BotonBasicos.png");
-        archivos.buttonTextureD = LoadTexture("resources/SM_BotonLetras.png");
-        archivos.buttonTextureE = LoadTexture("resources/SM_BotonColores.png");
-        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
-        archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
-        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
-    }
-
-    if (strcmp(pantalla, "CREDITOS") == 0)
-    {
-        archivos.backgroundTexture_creditos = LoadTexture("resources/SM_PantallaCreditos.png");
-        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
-        archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
-        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
-    }
-
-    if (strcmp(pantalla, "JUGAR_BASICO") == 0)
-    {
-        archivos.backgroundTexture_basico = LoadTexture("resources/SM_PantallaBasicos.png");
-        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
-        archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
-        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
-        archivos.cardsound = LoadSound("audio/resources/SM_cards.wav");
-        SetSoundVolume(archivos.cardsound, 1.0f);
-        archivos.font = LoadFont("text/resources/Motley Forces.ttf");
-        // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
-    }
-
-    if (strcmp(pantalla, "JUGAR_LETRAS") == 0)
-    {
-        archivos.backgroundTexture_letras = LoadTexture("resources/SM_PantallaLetras.png");
-        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
-        archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
-        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
-        archivos.cardsound = LoadSound("audio/resources/SM_cards.wav");
-        archivos.font = LoadFont("text/resources/Motley Forces.ttf");
-        SetSoundVolume(archivos.cardsound, 1.0f);
-        // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
-    }
-
-    if (strcmp(pantalla, "JUGAR_COLORES") == 0)
-    {
-        archivos.backgroundTexture_colores = LoadTexture("resources/SM_PantallaColores.png");
-        archivos.buttonTexture2 = LoadTexture("resources/SM_BotonAgrandar.png");
-        archivos.buttonTexture3 = LoadTexture("resources/SM_BotonRegresar.png");
-        archivos.buttonTexture4 = LoadTexture("resources/SM_BotonVolumen.png");
-        archivos.cardsound = LoadSound("audio/resources/SM_cards.wav");
-        archivos.font = LoadFont("text/resources/Motley Forces.ttf");
-        SetSoundVolume(archivos.cardsound, 1.0f);
-        // archivos.buttonTexture1 = LoadTexture("resources/SM_CartaAtras.png");
-    }
-    // Agrega más condiciones para otras pantallas
-
-    return archivos;
+    UnloadTexture(assets.background);
 }
 
-void UnloadContent(cargas archivos, GameScreen currentScreen)
+void animetext(const char *texto, int fontSize, int textWidth, int textHeight, files assets)
 {
-    // Descargar texturas
-    if (currentScreen == INICIO)
+    static int originalSize = fontSize;
+    static int timer = 0;
+
+    // Incrementar el temporizador
+    timer++;
+
+    // Obtener la posición del cursor
+    Vector2 mousePosition = GetMousePosition();
+
+    // Crear un rectángulo del área ocupada por el texto
+    Rectangle textRect = {
+        (GetScreenWidth() - textWidth) / 2,   // posición x del texto
+        (GetScreenHeight() - textHeight) / 2, // posición y del texto
+        textWidth,                            // ancho del texto
+        textHeight                            // height del texto
+    };
+
+    // Verificar si el cursor está sobre el área ocupada por el texto
+    bool isMouseOverText = CheckCollisionPointRec(mousePosition, textRect);
+
+    // Si el cursor está sobre el texto, no aplicar animación
+    if (isMouseOverText)
     {
-        UnloadTexture(archivos.backgroundTexture);
-        UnloadTexture(archivos.buttonTextureA);
-        UnloadTexture(archivos.buttonTextureB);
-        UnloadTexture(archivos.buttonTexture2);
-        UnloadTexture(archivos.buttonTexture4);
+        DrawText(texto, (GetScreenWidth() - textWidth) / 2, (GetScreenHeight() - textHeight) / 2, fontSize, YELLOW);
     }
-    if (currentScreen == JUGAR)
+    else
     {
-        UnloadTexture(archivos.backgroundTexture);
-        UnloadTexture(archivos.buttonTextureC);
-        UnloadTexture(archivos.buttonTextureD);
-        UnloadTexture(archivos.buttonTextureE);
-        UnloadTexture(archivos.buttonTexture3);
-    }
-    if (currentScreen == CREDITOS)
-    {
-        UnloadTexture(archivos.backgroundTexture_creditos);
-    }
-
-    if (currentScreen == JUGAR_BASICO)
-    {
-        UnloadTexture(archivos.backgroundTexture_basico);
-        UnloadSound(archivos.cardsound);
-        UnloadFont(archivos.font);
-        // UnloadTexture(archivos.buttonTexture1);
-    }
-
-    if (currentScreen == JUGAR_LETRAS)
-    {
-        UnloadTexture(archivos.backgroundTexture_letras);
-        UnloadSound(archivos.cardsound);
-        UnloadFont(archivos.font);
-        // UnloadTexture(archivos.buttonTexture1);
-    }
-
-    if (currentScreen == JUGAR_COLORES)
-    {
-        UnloadTexture(archivos.backgroundTexture_colores);
-        UnloadSound(archivos.cardsound);
-        UnloadFont(archivos.font);
-        // UnloadTexture(archivos.buttonTexture1);
-    }
-}
-
-cartas LoadCartas_b(const char categoria[], cartas todo)
-{
-    if (strcmp(categoria, "BASICO") == 0)
-    {
-        todo.carta_back = LoadTexture("resources/SM_CartaAtras.png");
-        todo.carta1 = LoadTexture("resources/SM_CartaBien.png");
-        todo.carta2 = LoadTexture("resources/SM_CartaEs.png");
-        todo.carta3 = LoadTexture("resources/SM_CartaGracias.png");
-        todo.carta4 = LoadTexture("resources/SM_CartaMal.png");
-        todo.carta5 = LoadTexture("resources/SM_CartaNo.png");
-        todo.carta6 = LoadTexture("resources/SM_CartaPerdon.png");
-        todo.carta7 = LoadTexture("resources/SM_CartaPorFavor.png");
-        todo.carta8 = LoadTexture("resources/SM_CartaQue.png");
-        todo.carta9 = LoadTexture("resources/SM_CartaSi.png");
-    }
-
-    return todo;
-}
-
-LETRAS_cartas LoadCartasLETRAS(const char categoria[], LETRAS_cartas todo2)
-{
-    if (strcmp(categoria, "LETRAS") == 0)
-    {
-        todo2.carta_back = LoadTexture("resources/SM_CartaAtras.png");
-        todo2.carta19 = LoadTexture("resources/SM_CartaA.png");
-        todo2.carta20 = LoadTexture("resources/SM_CartaC.png");
-        todo2.carta21 = LoadTexture("resources/SM_CartaD.png");
-        todo2.carta22 = LoadTexture("resources/SM_CartaE.png");
-        todo2.carta23 = LoadTexture("resources/SM_CartaJ.png");
-        todo2.carta24 = LoadTexture("resources/SM_CartaM.png");
-        todo2.carta25 = LoadTexture("resources/SM_CartaP.png");
-        todo2.carta26 = LoadTexture("resources/SM_CartaR.png");
-        todo2.carta27 = LoadTexture("resources/SM_CartaS.png");
-    }
-    return todo2;
-}
-
-LETRAS_cartas UnloadCartasLETRAS(const char categoria[], LETRAS_cartas abcd)
-{
-    if (strcmp(categoria, "LETRAS") == 0)
-    {
-        UnloadTexture(abcd.carta_back);
-        UnloadTexture(abcd.carta19);
-        UnloadTexture(abcd.carta20);
-        UnloadTexture(abcd.carta21);
-        UnloadTexture(abcd.carta22);
-        UnloadTexture(abcd.carta23);
-        UnloadTexture(abcd.carta24);
-        UnloadTexture(abcd.carta25);
-        UnloadTexture(abcd.carta26);
-        UnloadTexture(abcd.carta27);
-    }
-    return abcd;
-}
-
-COLOR_cartas LoadCartasCOLORES(const char categoria[], COLOR_cartas todo3)
-{
-    if (strcmp(categoria, "COLORES") == 0)
-    {
-        todo3.carta_back = LoadTexture("resources/SM_CartaAtras.png");
-        todo3.carta10 = LoadTexture("resources/SM_CartaAzul.png");
-        todo3.carta11 = LoadTexture("resources/SM_CartaAmarillo.png");
-        todo3.carta12 = LoadTexture("resources/SM_CartaBlanco.png");
-        todo3.carta13 = LoadTexture("resources/SM_CartaCafe.png");
-        todo3.carta14 = LoadTexture("resources/SM_CartaColor.png");
-        todo3.carta15 = LoadTexture("resources/SM_CartaRosa.png");
-        todo3.carta16 = LoadTexture("resources/SM_CartaNegro.png");
-        todo3.carta17 = LoadTexture("resources/SM_CartaRojo.png");
-        todo3.carta18 = LoadTexture("resources/SM_CartaVerde.png");
-    }
-    return todo3;
-}
-
-COLOR_cartas UnloadCartasCOLORES(const char categoria[], COLOR_cartas rainbow)
-{
-    if (strcmp(categoria, "COLORES") == 0)
-    {
-        UnloadTexture(rainbow.carta_back);
-        UnloadTexture(rainbow.carta10);
-        UnloadTexture(rainbow.carta11);
-        UnloadTexture(rainbow.carta12);
-        UnloadTexture(rainbow.carta13);
-        UnloadTexture(rainbow.carta14);
-        UnloadTexture(rainbow.carta15);
-        UnloadTexture(rainbow.carta16);
-        UnloadTexture(rainbow.carta17);
-        UnloadTexture(rainbow.carta18);
-    }
-    return rainbow;
-}
-
-cartas UnloadCartas_b(const char categoria[], cartas todo)
-{
-    if (strcmp(categoria, "BASICO") == 0)
-    {
-        UnloadTexture(todo.carta_back);
-        UnloadTexture(todo.carta1);
-        UnloadTexture(todo.carta2);
-        UnloadTexture(todo.carta3);
-        UnloadTexture(todo.carta4);
-        UnloadTexture(todo.carta5);
-        UnloadTexture(todo.carta6);
-        UnloadTexture(todo.carta7);
-        UnloadTexture(todo.carta8);
-        UnloadTexture(todo.carta9);
-    }
-
-    return todo;
-}
-
-int drawinicio(cargas archivos)
-{
-    DrawTexturePro(
-        archivos.backgroundTexture,
-        (Rectangle){0, 0, (float)archivos.backgroundTexture.width, (float)archivos.backgroundTexture.height},
-        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-        (Vector2){0, 0},
-        0.0f,
-        WHITE);
-
-    /* DIBUJAR LOS BOTONES */
-    // Centrar los botones horizontalmente y ajustar la distancia entre ellos
-    float startX = (GetScreenWidth() - archivos.buttonTextureA.width) / 2;
-    float startY = (GetScreenHeight() - archivos.buttonTextureA.height) / 2;
-    float bstartX = (GetScreenWidth() - archivos.buttonTextureB.width) / 2;
-
-    Rectangle buttonRectA = {startX, startY, (float)archivos.buttonTextureA.width, (float)archivos.buttonTextureA.height};
-    Rectangle buttonRectB = {bstartX, GetScreenHeight() - archivos.buttonTextureB.height, (float)archivos.buttonTextureB.width, (float)archivos.buttonTextureB.height};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    // Ajustar la posición y de los botones para moverlos a la parte superior de la pantalla
-    float buttonY = 0;
-    // Ajustar la posición x de los botones para moverlos a la derecha de la pantalla
-    float button2X = GetScreenWidth() - 2 * archivos.buttonTexture2.width / 4;
-    float button4X = GetScreenWidth() - archivos.buttonTexture4.width / 4;
-    Rectangle buttonRect2 = {button2X, buttonY, (float)archivos.buttonTexture2.width / 4, (float)archivos.buttonTexture2.height / 4};
-    Rectangle buttonRect4 = {button4X, buttonY, (float)archivos.buttonTexture4.width / 4, (float)archivos.buttonTexture4.height / 4};
-
-    /* VERIFICAR SI EL MOUSE ESTÁ SOBRE LOS BOTONES */
-    bool isMouseOverButtonA = CheckCollisionPointRec(GetMousePosition(), buttonRectA);
-    bool isMouseOverButtonB = CheckCollisionPointRec(GetMousePosition(), buttonRectB);
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    bool isMouseOverButton2 = CheckCollisionPointRec(GetMousePosition(), buttonRect2);
-    bool isMouseOverButton4 = CheckCollisionPointRec(GetMousePosition(), buttonRect4);
-
-    /* CAMBIAR EL TAMAÑO DEL BOTÓN (A, B) SI EL MOUSE ESTÁ SOBRE DE EL */
-    if (isMouseOverButtonA)
-    {
-        /* AGRANDAR Y REDUCIR (A) */
+        // Si el cursor no está sobre el texto, aplicar animación
         float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
-        buttonRectA.width = archivos.buttonTextureA.width * scale;
-        buttonRectA.height = archivos.buttonTextureA.height * scale;
+
+        // Aplicar la escala al tamaño del texto
+        int newFontSize = fontSize * scale;
+
+        // Dibujar el texto con el nuevo tamaño
+        DrawText(texto, (GetScreenWidth() - textWidth * scale) / 2, (GetScreenHeight() - textHeight * scale) / 2, newFontSize, YELLOW);
     }
-
-    if (isMouseOverButtonB)
-    {
-        /* AGRANDAR Y REDUCIR (B) */
-        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
-        buttonRectB.width = archivos.buttonTextureB.width * scale;
-        buttonRectB.height = archivos.buttonTextureB.height * scale;
-    }
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    if (isMouseOverButton2)
-    {
-        /* AGRANDAR Y REDUCIR (2) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect2.width = archivos.buttonTexture2.width * scale;
-        buttonRect2.height = archivos.buttonTexture2.height * scale;
-    }
-
-    if (isMouseOverButton4)
-    {
-        /* AGRANDAR Y REDUCIR (4) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect4.width = archivos.buttonTexture4.width * scale;
-        buttonRect4.height = archivos.buttonTexture4.height * scale;
-    }
-
-    /* AJUSTAR LA POSICIÓN DEL BOTÓN PARA QUE ESTÉ EN EL CENTRO */
-    Vector2 buttonPosition = {buttonRectA.x + buttonRectA.width / 2, buttonRectA.y + buttonRectA.height / 2};
-    Vector2 buttonPositionB = {buttonRectB.x + buttonRectB.width / 2, buttonRectB.y + buttonRectB.height / 2};
-    DrawTexturePro(archivos.buttonTextureA, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTextureA.width), static_cast<float>(archivos.buttonTextureA.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRectA.width, buttonRectA.height}, (Vector2){buttonRectA.width / 2, buttonRectA.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTextureB, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTextureB.width), static_cast<float>(archivos.buttonTextureB.height)}, (Rectangle){buttonPositionB.x, buttonPositionB.y, buttonRectB.width, buttonRectB.height}, (Vector2){buttonRectB.width / 2, buttonRectB.height / 2}, 0.0f, WHITE);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    Vector2 buttonPosition2 = {buttonRect2.x + buttonRect2.width / 2, buttonRect2.y + buttonRect2.height / 2};
-    Vector2 buttonPosition4 = {buttonRect4.x + buttonRect4.width / 2, buttonRect4.y + buttonRect4.height / 2};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    DrawTexturePro(archivos.buttonTexture2, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture2.width), static_cast<float>(archivos.buttonTexture2.height)}, (Rectangle){buttonPosition2.x, buttonPosition2.y, buttonRect2.width, buttonRect2.height}, (Vector2){buttonRect2.width / 2, buttonRect2.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
-
-    /* VERIFICAR SI SE HIZO CLIC EN EL BOTÓN */
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        if (isMouseOverButtonA)
-            return 1; // Botón A clickeado
-        if (isMouseOverButtonB)
-            return 2; // Botón B clickeado
-        if (isMouseOverButton2)
-            return 3; // Botón 2 clickeado
-        if (isMouseOverButton4)
-            return 4; // Botón 4 clickeado
-    }
-
-    return 0; // Ningún botón
 }
 
-Texture2D GetCartaTexture(cartas todo, int num_carta)
+void grid(int height, int weight)
 {
-    switch (num_carta)
+    // Dibuja el grid de fondo gris.
+    for (int i = 0; i < weight; i += 20)
     {
-    case 1:
-        return todo.carta1;
-    case 2:
-        return todo.carta2;
-    case 3:
-        return todo.carta3;
-    case 4:
-        return todo.carta4;
-    case 5:
-        return todo.carta5;
-    case 6:
-        return todo.carta6;
-    case 7:
-        return todo.carta7;
-    case 8:
-        return todo.carta8;
-    case 9:
-        return todo.carta9;
-    // Agrega más casos según la cantidad de cartas que tengas
-    default:
-        return todo.carta_back; // Textura por defecto (carta oculta)
+        DrawLine(i, 0, i, height, Fade(LIGHTGRAY, 0.1f));
+    }
+    for (int i = 0; i < height; i += 20)
+    {
+        DrawLine(0, i, weight, i, Fade(LIGHTGRAY, 0.1f));
     }
 }
 
-void iniciar_memo(memorama &estruct)
-{
-    // Inicializar las coordenadas de las cartas volteadas
-
-    estruct.prim_carta_fila = -1;
-    estruct.prim_carta_columna = -1;
-    estruct.seg_carta_fila = -1;
-    estruct.seg_carta_columna = -1;
-
-    // Inicializar el contador de cartas en estado 1
-    estruct.cartas_en_estado_1 = 0;
-    // Establecer el número máximo de cartas permitidas en estado 1
-    estruct.max_cartas_estado_1 = 2;
-
-    // Inicializar todas las cartas como false
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 6; j++)
-        {
-            estruct.card_state[i][j] = false;
-        }
-    }
-
-    // Números del 1 al 9
-    int numeros_disponibles[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-
-    // Barajar los números disponibles
-    srand((unsigned int)time(NULL));
-    for (int i = 17; i > 0; i--)
-    {
-        int j = rand() % (i + 1);
-        // Intercambiar numeros_disponibles[i] y numeros_disponibles[j]
-        int temp = numeros_disponibles[i];
-        numeros_disponibles[i] = numeros_disponibles[j];
-        numeros_disponibles[j] = temp;
-    }
-
-    // Asignar aleatoriamente las cartas
-    int indice = 0;
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 6; j++)
-        {
-            // Asignar el valor a la carta
-            estruct.cartas[i][j] = numeros_disponibles[indice];
-
-            // Imprimir las cartas asignadas
-            // printf("Carta asignada en (%d, %d): %d\n", i, j, estruct.cartas[i][j]);
-
-            indice++;
-        }
-    }
-}
-
-void memoria(cartas todo, memorama &estruct, cargas archivos)
-{
-    int ancho = GetScreenWidth();
-    int altura = GetScreenHeight();
-
-    int fila = estruct.num_fila;
-    int columna = estruct.num_columna;
-
-    float espacioX = 8.0f;
-    float espacioY = 8.0f;
-
-    float aspecto = 179.0f / 130.0f;
-    float ajustes = 130.0f;
-    float ajuste_altura = ajustes * aspecto;
-
-    Vector2 mouse = GetMousePosition();
-
-    // Agregar una matriz para rastrear qué pares ya fueron encontrados
-    static bool cartas_pares_encontrados[3][6] = {false};
-    static int pares_encontrados = 0;
-
-    for (int i = 0; i < fila; i++)
-    {
-        for (int j = 0; j < columna; j++)
-        {
-            float posx = (ancho - columna * (ajustes + espacioX) + espacioX) / 2 + j * (ajustes + espacioX);
-            float posy = (altura - fila * (ajuste_altura + espacioY) + espacioY) / 2 + i * (ajuste_altura + espacioY);
-
-            Rectangle carta = {posx, posy, ajustes, ajuste_altura};
-            bool isMouseOverCard = CheckCollisionPointRec(mouse, carta);
-
-            // Verificar si la carta ya es parte de un par encontrado
-            if (cartas_pares_encontrados[i][j])
-            {
-                // No permitir interacción con estas cartas
-                continue;
-            }
-
-            // Chequear clic izquierdo en la carta
-            if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-            {
-                PlaySound(archivos.cardsound);
-                // Verificar el estado actual de la carta
-                if (!estruct.card_state[i][j] && estruct.cartas_en_estado_1 < estruct.max_cartas_estado_1)
-                {
-                    // Si ya hay una carta volteada, verificar si es la misma
-                    if (estruct.prim_carta_fila != -1 && estruct.prim_carta_columna != -1 &&
-                        (estruct.prim_carta_fila != i || estruct.prim_carta_columna != j))
-                    {
-                        // Verificar si las cartas son iguales
-                        estruct.cartas[estruct.seg_carta_fila][estruct.seg_carta_columna] = estruct.cartas[i][j];
-                        int valor = estruct.cartas[estruct.seg_carta_fila][estruct.seg_carta_columna];
-                        int valor2 = estruct.cartas[estruct.prim_carta_fila][estruct.prim_carta_columna];
-
-                        printf("Carta volteada UNO en (%d, %d): %d\n", i, j, valor);
-                        printf("Carta volteada DOS en (%d, %d): %d\n", estruct.prim_carta_fila, estruct.prim_carta_columna, valor2);
-
-                        if (valor == valor2)
-                        {
-                            pares_encontrados++;
-                            printf("Pares encontrados: %d\n", pares_encontrados);
-
-                            // Marcar el par como encontrado en la matriz
-                            cartas_pares_encontrados[i][j] = true;
-                            cartas_pares_encontrados[estruct.prim_carta_fila][estruct.prim_carta_columna] = true;
-
-                            // Ambas cartas son iguales, reiniciar las coordenadas de ambas cartas
-                            estruct.prim_carta_fila = -1;
-                            estruct.prim_carta_columna = -1;
-                            estruct.seg_carta_fila = -1;
-                            estruct.seg_carta_columna = -1;
-                            estruct.cartas_en_estado_1 = 0;
-                            estruct.max_cartas_estado_1 = 2;
-
-                            // No permitir interacción con estas cartas
-                            continue;
-                        }
-                        else
-                        {
-                            // Las cartas no son iguales, esperar para volver a voltearlas
-                            SetMouseCursor(MOUSE_CURSOR_ARROW);
-                        }
-                    }
-                    else
-                    {
-                        // No hay carta volteada previamente, actualizar las coordenadas de la primera carta
-                        estruct.prim_carta_fila = i;
-                        estruct.prim_carta_columna = j;
-                        estruct.seg_carta_fila = -1;
-                        estruct.seg_carta_columna = -1;
-                    }
-
-                    // Cambiar el estado de la carta a 1
-                    estruct.card_state[i][j] = true;
-                    estruct.cartas_en_estado_1++;
-
-                    // Verificar si la segunda carta ya está volteada
-                    if (estruct.seg_carta_fila != -1 && estruct.seg_carta_columna != -1)
-                    {
-                        // No permitir interacción con estas cartas
-                        continue;
-                    }
-
-                    // No permitir interacción con la primera carta ya volteada
-                    continue;
-                }
-                else if (estruct.card_state[i][j])
-                {
-                    // Si la carta estaba en estado 1, cambiarla a 0
-                    estruct.card_state[i][j] = false;
-                    estruct.cartas_en_estado_1--;
-
-                    // Reiniciar las coordenadas de la primera y segunda carta
-                    estruct.prim_carta_fila = -1;
-                    estruct.prim_carta_columna = -1;
-                    estruct.seg_carta_fila = -1;
-                    estruct.seg_carta_columna = -1;
-                }
-            }
-
-            // Dibujar cartas
-            int num_carta = estruct.cartas[i][j];
-            Texture2D currentTexture;
-            if (estruct.card_state[i][j])
-            {
-                currentTexture = GetCartaTexture(todo, num_carta);
-            }
-            else
-            {
-                currentTexture = todo.carta_back;
-            }
-
-            DrawTexturePro(
-                currentTexture,
-                (Rectangle){0, 0, (float)currentTexture.width, (float)currentTexture.height},
-                carta,
-                (Vector2){0, 0},
-                0.0f,
-                WHITE);
-
-            char texto[30];
-            sprintf(texto, "Pares encontrados: %d", pares_encontrados);
-
-            int fontsize = 25;
-            int textoAncho = MeasureText(texto, fontsize);
-            int textoAlto = fontsize;
-
-            Color micolorpersonalizado = {14, 102, 85, 255};
-            DrawTextEx(archivos.font, texto, (Vector2){GetScreenWidth() - textoAncho - 10 - 90, GetScreenHeight() - textoAlto - 10}, fontsize, 2, micolorpersonalizado);
-        }
-    }
-}
-
-JuegoEstado jugar_basico(GameScreen currentScreen, cargas archivos, cartas todo, memorama &estruct)
-{
-    DrawTexturePro(
-        archivos.backgroundTexture_basico,
-        (Rectangle){0, 0, (float)archivos.backgroundTexture_basico.width, (float)archivos.backgroundTexture_basico.height},
-        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-        (Vector2){0, 0},
-        0.0f,
-        WHITE);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    // Ajustar la posición y de los botones para moverlos a la parte superior de la pantalla
-    float buttonY = 0;
-    // Ajustar la posición x de los botones para moverlos a la derecha de la pantalla
-    float button2X = GetScreenWidth() - 2 * archivos.buttonTexture2.width / 4;
-    float button3X = 0;
-    float button4X = GetScreenWidth() - archivos.buttonTexture4.width / 4;
-    Rectangle buttonRect2 = {button2X, buttonY, (float)archivos.buttonTexture2.width / 4, (float)archivos.buttonTexture2.height / 4};
-    Rectangle buttonRect3 = {button3X, GetScreenHeight() - archivos.buttonTexture3.height / 4, (float)archivos.buttonTexture3.width / 4, (float)archivos.buttonTexture3.height / 4};
-    Rectangle buttonRect4 = {button4X, buttonY, (float)archivos.buttonTexture4.width / 4, (float)archivos.buttonTexture4.height / 4};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    bool isMouseOverButton2 = CheckCollisionPointRec(GetMousePosition(), buttonRect2);
-    bool isMouseOverButton3 = CheckCollisionPointRec(GetMousePosition(), buttonRect3);
-    bool isMouseOverButton4 = CheckCollisionPointRec(GetMousePosition(), buttonRect4);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    if (isMouseOverButton2)
-    {
-        /* AGRANDAR Y REDUCIR (2) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect2.width = archivos.buttonTexture2.width * scale;
-        buttonRect2.height = archivos.buttonTexture2.height * scale;
-    }
-
-    if (isMouseOverButton3)
-    {
-        /* AGRANDAR Y REDUCIR (3) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect3.width = archivos.buttonTexture3.width * scale;
-        buttonRect3.height = archivos.buttonTexture3.height * scale;
-    }
-
-    if (isMouseOverButton4)
-    {
-        /* AGRANDAR Y REDUCIR (4) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect4.width = archivos.buttonTexture4.width * scale;
-        buttonRect4.height = archivos.buttonTexture4.height * scale;
-    }
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    Vector2 buttonPosition2 = {buttonRect2.x + buttonRect2.width / 2, buttonRect2.y + buttonRect2.height / 2};
-    Vector2 buttonPosition3 = {buttonRect3.x + buttonRect3.width / 2, buttonRect3.y + buttonRect3.height / 2};
-    Vector2 buttonPosition4 = {buttonRect4.x + buttonRect4.width / 2, buttonRect4.y + buttonRect4.height / 2};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    DrawTexturePro(archivos.buttonTexture2, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture2.width), static_cast<float>(archivos.buttonTexture2.height)}, (Rectangle){buttonPosition2.x, buttonPosition2.y, buttonRect2.width, buttonRect2.height}, (Vector2){buttonRect2.width / 2, buttonRect2.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture3, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture3.width), static_cast<float>(archivos.buttonTexture3.height)}, (Rectangle){buttonPosition3.x, buttonPosition3.y, buttonRect3.width, buttonRect3.height}, (Vector2){buttonRect3.width / 2, buttonRect3.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
-
-    memoria(todo, estruct, archivos);
-
-    /* VERIFICAR SI SE HIZO CLIC EN EL BOTÓN */
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        if (isMouseOverButton2)
-            return FULLSCREEN; // Botón 2 clickeado
-        if (isMouseOverButton3)
-            return JUEGO_REGRESAR_MENU; // Botón 3 clickeado
-        if (isMouseOverButton4)
-            return MUSICA; // Botón 4 clickeado
-    }
-
-    if (IsKeyPressed(KEY_DELETE))
-    {
-        // Si se presiona DELETE, regresar al menú
-        return JUEGO_REGRESAR_MENU;
-    }
-
-    // Si no hay cambio de pantalla, continúa jugando
-    return JUEGO_JUGANDO;
-}
-
-Texture2D GetCartaTexture_LETRA(LETRAS_cartas todo2, int num_carta)
-{
-    switch (num_carta)
-    {
-    case 19:
-        return todo2.carta19;
-    case 20:
-        return todo2.carta20;
-    case 21:
-        return todo2.carta21;
-    case 22:
-        return todo2.carta22;
-    case 23:
-        return todo2.carta23;
-    case 24:
-        return todo2.carta24;
-    case 25:
-        return todo2.carta25;
-    case 26:
-        return todo2.carta26;
-    case 27:
-        return todo2.carta27;
-    // Agrega más casos según la cantidad de cartas que tengas
-    default:
-        return todo2.carta_back; // Textura por defecto (carta oculta)
-    }
-}
-
-void iniciar_memo_LETRA(Letras &estruct3)
-{
-    // Inicializar las coordenadas de las cartas volteadas
-    estruct3.prim_carta_fila = -1;
-    estruct3.prim_carta_columna = -1;
-    estruct3.seg_carta_fila = -1;
-    estruct3.seg_carta_columna = -1;
-
-    // Inicializar el contador de cartas en estado 1
-    estruct3.cartas_en_estado_1 = 0;
-    // Establecer el número máximo de cartas permitidas en estado 1
-    estruct3.max_cartas_estado_1 = 2;
-
-    // Inicializar todas las cartas como false
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 6; j++)
-        {
-            estruct3.card_state[i][j] = false;
-        }
-    }
-
-    // Números del 1 al 9
-    int numeros_disponibles[] = {19, 20, 21, 22, 23, 24, 25, 26, 27, 19, 20, 21, 22, 23, 24, 25, 26, 27};
-
-    // Barajar los números disponibles
-    srand((unsigned int)time(NULL));
-    for (int i = 17; i > 0; i--)
-    {
-        int j = rand() % (i + 1);
-        // Intercambiar numeros_disponibles[i] y numeros_disponibles[j]
-        int temp = numeros_disponibles[i];
-        numeros_disponibles[i] = numeros_disponibles[j];
-        numeros_disponibles[j] = temp;
-    }
-
-    // Asignar aleatoriamente las cartas
-    int indice = 0;
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 6; j++)
-        {
-            // Asignar el valor a la carta
-            estruct3.cartas[i][j] = numeros_disponibles[indice];
-
-            // Imprimir las cartas asignadas
-            // printf("Carta asignada en (%d, %d): %d\n", i, j, estruct.cartas[i][j]);
-
-            indice++;
-        }
-    }
-}
-
-void LETRAS_memoria(LETRAS_cartas todo2, Letras &estruct3, cargas archivos)
-{
-    int ancho = GetScreenWidth();
-    int altura = GetScreenHeight();
-
-    int fila = estruct3.num_fila;
-    int columna = estruct3.num_columna;
-
-    float espacioX = 10.0f;
-    float espacioY = 10.0f;
-
-    float aspecto = 179.0f / 130.0f;
-    float ajustes = 130.0f;
-    float ajuste_altura = ajustes * aspecto;
-
-    Vector2 mouse = GetMousePosition();
-
-    // Agregar una matriz para rastrear qué pares ya fueron encontrados
-    static bool cartas_pares_encontrados[3][6] = {false};
-    static int pares_encontrados = 0;
-
-    for (int i = 0; i < fila; i++)
-    {
-        for (int j = 0; j < columna; j++)
-        {
-            float posx = (ancho - columna * (ajustes + espacioX) + espacioX) / 2 + j * (ajustes + espacioX);
-            float posy = (altura - fila * (ajuste_altura + espacioY) + espacioY) / 2 + i * (ajuste_altura + espacioY);
-
-            Rectangle carta = {posx, posy, ajustes, ajuste_altura};
-            bool isMouseOverCard = CheckCollisionPointRec(mouse, carta);
-
-            // Verificar si la carta ya es parte de un par encontrado
-            if (cartas_pares_encontrados[i][j])
-            {
-                // No permitir interacción con estas cartas
-                continue;
-            }
-
-            // Chequear clic izquierdo en la carta
-            if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-            {
-                PlaySound(archivos.cardsound);
-                // Verificar el estado actual de la carta
-                if (!estruct3.card_state[i][j] && estruct3.cartas_en_estado_1 < estruct3.max_cartas_estado_1)
-                {
-                    // Si ya hay una carta volteada, verificar si es la misma
-                    if (estruct3.prim_carta_fila != -1 && estruct3.prim_carta_columna != -1 &&
-                        (estruct3.prim_carta_fila != i || estruct3.prim_carta_columna != j))
-                    {
-                        // Verificar si las cartas son iguales
-                        estruct3.cartas[estruct3.seg_carta_fila][estruct3.seg_carta_columna] = estruct3.cartas[i][j];
-                        int valor = estruct3.cartas[estruct3.seg_carta_fila][estruct3.seg_carta_columna];
-                        int valor2 = estruct3.cartas[estruct3.prim_carta_fila][estruct3.prim_carta_columna];
-
-                        printf("Carta volteada UNO en (%d, %d): %d\n", i, j, valor);
-                        printf("Carta volteada DOS en (%d, %d): %d\n", estruct3.prim_carta_fila, estruct3.prim_carta_columna, valor2);
-
-                        if (valor == valor2)
-                        {
-                            pares_encontrados++;
-                            printf("Pares encontrados: %d\n", pares_encontrados);
-
-                            // Marcar el par como encontrado en la matriz
-                            cartas_pares_encontrados[i][j] = true;
-                            cartas_pares_encontrados[estruct3.prim_carta_fila][estruct3.prim_carta_columna] = true;
-
-                            // Ambas cartas son iguales, reiniciar las coordenadas de ambas cartas
-                            estruct3.prim_carta_fila = -1;
-                            estruct3.prim_carta_columna = -1;
-                            estruct3.seg_carta_fila = -1;
-                            estruct3.seg_carta_columna = -1;
-                            estruct3.cartas_en_estado_1 = 0;
-                            estruct3.max_cartas_estado_1 = 2;
-
-                            // No permitir interacción con estas cartas
-                            continue;
-                        }
-                        else
-                        {
-                            // Las cartas no son iguales, esperar para volver a voltearlas
-                            SetMouseCursor(MOUSE_CURSOR_ARROW);
-                        }
-                    }
-                    else
-                    {
-                        // No hay carta volteada previamente, actualizar las coordenadas de la primera carta
-                        estruct3.prim_carta_fila = i;
-                        estruct3.prim_carta_columna = j;
-                        estruct3.seg_carta_fila = -1;
-                        estruct3.seg_carta_columna = -1;
-                    }
-
-                    // Cambiar el estado de la carta a 1
-                    estruct3.card_state[i][j] = true;
-                    estruct3.cartas_en_estado_1++;
-
-                    // Verificar si la segunda carta ya está volteada
-                    if (estruct3.seg_carta_fila != -1 && estruct3.seg_carta_columna != -1)
-                    {
-                        // No permitir interacción con estas cartas
-                        continue;
-                    }
-
-                    // No permitir interacción con la primera carta ya volteada
-                    continue;
-                }
-                else if (estruct3.card_state[i][j])
-                {
-                    // Si la carta estaba en estado 1, cambiarla a 0
-                    estruct3.card_state[i][j] = false;
-                    estruct3.cartas_en_estado_1--;
-
-                    // Reiniciar las coordenadas de la primera y segunda carta
-                    estruct3.prim_carta_fila = -1;
-                    estruct3.prim_carta_columna = -1;
-                    estruct3.seg_carta_fila = -1;
-                    estruct3.seg_carta_columna = -1;
-                }
-            }
-
-            // Dibujar cartas
-            int num_carta = estruct3.cartas[i][j];
-            Texture2D currentTexture;
-            if (estruct3.card_state[i][j])
-            {
-                currentTexture = GetCartaTexture_LETRA(todo2, num_carta);
-            }
-            else
-            {
-                currentTexture = todo2.carta_back;
-            }
-
-            DrawTexturePro(
-                currentTexture,
-                (Rectangle){0, 0, (float)currentTexture.width, (float)currentTexture.height},
-                carta,
-                (Vector2){0, 0},
-                0.0f,
-                WHITE);
-
-            char texto[30];
-            sprintf(texto, "Pares encontrados: %d", pares_encontrados);
-
-            int fontsize = 25;
-            int textoAncho = MeasureText(texto, fontsize);
-            int textoAlto = fontsize;
-
-            Color micolorpersonalizado = {14, 102, 85, 255};
-            DrawTextEx(archivos.font, texto, (Vector2){GetScreenWidth() - textoAncho - 10 - 90, GetScreenHeight() - textoAlto - 10}, fontsize, 2, micolorpersonalizado);
-        }
-    }
-}
-
-JuegoEstado jugar_letras(GameScreen currentScreen, cargas archivos, LETRAS_cartas todo2, Letras &estruct3)
-{
-    DrawTexturePro(
-        archivos.backgroundTexture_letras,
-        (Rectangle){0, 0, (float)archivos.backgroundTexture_letras.width, (float)archivos.backgroundTexture_letras.height},
-        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-        (Vector2){0, 0},
-        0.0f,
-        WHITE);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    // Ajustar la posición y de los botones para moverlos a la parte superior de la pantalla
-    float buttonY = 0;
-    // Ajustar la posición x de los botones para moverlos a la derecha de la pantalla
-    float button2X = GetScreenWidth() - 2 * archivos.buttonTexture2.width / 4;
-    float button3X = 0;
-    float button4X = GetScreenWidth() - archivos.buttonTexture4.width / 4;
-    Rectangle buttonRect2 = {button2X, buttonY, (float)archivos.buttonTexture2.width / 4, (float)archivos.buttonTexture2.height / 4};
-    Rectangle buttonRect3 = {button3X, GetScreenHeight() - archivos.buttonTexture3.height / 4, (float)archivos.buttonTexture3.width / 4, (float)archivos.buttonTexture3.height / 4};
-    Rectangle buttonRect4 = {button4X, buttonY, (float)archivos.buttonTexture4.width / 4, (float)archivos.buttonTexture4.height / 4};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    bool isMouseOverButton2 = CheckCollisionPointRec(GetMousePosition(), buttonRect2);
-    bool isMouseOverButton3 = CheckCollisionPointRec(GetMousePosition(), buttonRect3);
-    bool isMouseOverButton4 = CheckCollisionPointRec(GetMousePosition(), buttonRect4);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    if (isMouseOverButton2)
-    {
-        /* AGRANDAR Y REDUCIR (2) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect2.width = archivos.buttonTexture2.width * scale;
-        buttonRect2.height = archivos.buttonTexture2.height * scale;
-    }
-
-    if (isMouseOverButton3)
-    {
-        /* AGRANDAR Y REDUCIR (3) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect3.width = archivos.buttonTexture3.width * scale;
-        buttonRect3.height = archivos.buttonTexture3.height * scale;
-    }
-
-    if (isMouseOverButton4)
-    {
-        /* AGRANDAR Y REDUCIR (4) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect4.width = archivos.buttonTexture4.width * scale;
-        buttonRect4.height = archivos.buttonTexture4.height * scale;
-    }
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    Vector2 buttonPosition2 = {buttonRect2.x + buttonRect2.width / 2, buttonRect2.y + buttonRect2.height / 2};
-    Vector2 buttonPosition3 = {buttonRect3.x + buttonRect3.width / 2, buttonRect3.y + buttonRect3.height / 2};
-    Vector2 buttonPosition4 = {buttonRect4.x + buttonRect4.width / 2, buttonRect4.y + buttonRect4.height / 2};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    DrawTexturePro(archivos.buttonTexture2, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture2.width), static_cast<float>(archivos.buttonTexture2.height)}, (Rectangle){buttonPosition2.x, buttonPosition2.y, buttonRect2.width, buttonRect2.height}, (Vector2){buttonRect2.width / 2, buttonRect2.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture3, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture3.width), static_cast<float>(archivos.buttonTexture3.height)}, (Rectangle){buttonPosition3.x, buttonPosition3.y, buttonRect3.width, buttonRect3.height}, (Vector2){buttonRect3.width / 2, buttonRect3.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
-
-    LETRAS_memoria(todo2, estruct3, archivos);
-    if (IsKeyPressed(KEY_DELETE))
-    {
-        // Si se presiona DELETE, regresar al menú
-        return JUEGO_REGRESAR_MENU;
-    }
-
-    /* VERIFICAR SI SE HIZO CLIC EN EL BOTÓN */
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        if (isMouseOverButton2)
-            return FULLSCREEN; // Botón 2 clickeado
-        if (isMouseOverButton3)
-            return JUEGO_REGRESAR_MENU; // Botón 3 clickeado
-        if (isMouseOverButton4)
-            return MUSICA; // Botón 4 clickeado
-    }
-
-    // Si no hay cambio de pantalla, continúa jugando
-    return JUEGO_JUGANDO;
-}
-
-Texture2D GetCartaTexture_COLOR(COLOR_cartas todo3, int num_carta)
-{
-    switch (num_carta)
-    {
-    case 10:
-        return todo3.carta10;
-    case 11:
-        return todo3.carta11;
-    case 12:
-        return todo3.carta12;
-    case 13:
-        return todo3.carta13;
-    case 14:
-        return todo3.carta14;
-    case 15:
-        return todo3.carta15;
-    case 16:
-        return todo3.carta16;
-    case 17:
-        return todo3.carta17;
-    case 18:
-        return todo3.carta18;
-    // Agrega más casos según la cantidad de cartas que tengas
-    default:
-        return todo3.carta_back; // Textura por defecto (carta oculta)
-    }
-}
-
-void iniciar_memo_COLOR(_colores &estruct2)
-{
-    // Inicializar las coordenadas de las cartas volteadas
-
-    estruct2.prim_carta_fila = -1;
-    estruct2.prim_carta_columna = -1;
-    estruct2.seg_carta_fila = -1;
-    estruct2.seg_carta_columna = -1;
-
-    // Inicializar el contador de cartas en estado 1
-    estruct2.cartas_en_estado_1 = 0;
-    // Establecer el número máximo de cartas permitidas en estado 1
-    estruct2.max_cartas_estado_1 = 2;
-
-    // Inicializar todas las cartas como false
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 6; j++)
-        {
-            estruct2.card_state[i][j] = false;
-        }
-    }
-
-    // Números del 1 al 9
-    int numeros_disponibles[] = {10, 11, 12, 13, 14, 15, 16, 17, 18, 10, 11, 12, 13, 14, 15, 16, 17, 18};
-
-    // Barajar los números disponibles
-    srand((unsigned int)time(NULL));
-    for (int i = 17; i > 0; i--)
-    {
-        int j = rand() % (i + 1);
-        // Intercambiar numeros_disponibles[i] y numeros_disponibles[j]
-        int temp = numeros_disponibles[i];
-        numeros_disponibles[i] = numeros_disponibles[j];
-        numeros_disponibles[j] = temp;
-    }
-
-    // Asignar aleatoriamente las cartas
-    int indice = 0;
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 6; j++)
-        {
-            // Asignar el valor a la carta
-            estruct2.cartas[i][j] = numeros_disponibles[indice];
-
-            // Imprimir las cartas asignadas
-            // printf("Carta asignada en (%d, %d): %d\n", i, j, estruct.cartas[i][j]);
-
-            indice++;
-        }
-    }
-}
-
-void COLOR_memoria(COLOR_cartas todo3, _colores &estruct2, cargas archivos)
-{
-    int ancho = GetScreenWidth();
-    int altura = GetScreenHeight();
-
-    int fila = estruct2.num_fila;
-    int columna = estruct2.num_columna;
-
-    float espacioX = 10.0f;
-    float espacioY = 10.0f;
-
-    float aspecto = 179.0f / 130.0f;
-    float ajustes = 130.0f;
-    float ajuste_altura = ajustes * aspecto;
-
-    Vector2 mouse = GetMousePosition();
-
-    // Agregar una matriz para rastrear qué pares ya fueron encontrados
-    static bool cartas_pares_encontrados[3][6] = {false};
-    static int pares_encontrados = 0;
-
-    for (int i = 0; i < fila; i++)
-    {
-        for (int j = 0; j < columna; j++)
-        {
-            float posx = (ancho - columna * (ajustes + espacioX) + espacioX) / 2 + j * (ajustes + espacioX);
-            float posy = (altura - fila * (ajuste_altura + espacioY) + espacioY) / 2 + i * (ajuste_altura + espacioY);
-
-            Rectangle carta = {posx, posy, ajustes, ajuste_altura};
-            bool isMouseOverCard = CheckCollisionPointRec(mouse, carta);
-
-            // Verificar si la carta ya es parte de un par encontrado
-            if (cartas_pares_encontrados[i][j])
-            {
-                // No permitir interacción con estas cartas
-                continue;
-            }
-
-            // Chequear clic izquierdo en la carta
-            if (isMouseOverCard && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-            {
-                PlaySound(archivos.cardsound);
-                // Verificar el estado actual de la carta
-                if (!estruct2.card_state[i][j] && estruct2.cartas_en_estado_1 < estruct2.max_cartas_estado_1)
-                {
-                    // Si ya hay una carta volteada, verificar si es la misma
-                    if (estruct2.prim_carta_fila != -1 && estruct2.prim_carta_columna != -1 &&
-                        (estruct2.prim_carta_fila != i || estruct2.prim_carta_columna != j))
-                    {
-                        // Verificar si las cartas son iguales
-                        estruct2.cartas[estruct2.seg_carta_fila][estruct2.seg_carta_columna] = estruct2.cartas[i][j];
-                        int valor = estruct2.cartas[estruct2.seg_carta_fila][estruct2.seg_carta_columna];
-                        int valor2 = estruct2.cartas[estruct2.prim_carta_fila][estruct2.prim_carta_columna];
-
-                        printf("Carta volteada UNO en (%d, %d): %d\n", i, j, valor);
-                        printf("Carta volteada DOS en (%d, %d): %d\n", estruct2.prim_carta_fila, estruct2.prim_carta_columna, valor2);
-
-                        if (valor == valor2)
-                        {
-                            pares_encontrados++;
-                            printf("Pares encontrados: %d\n", pares_encontrados);
-
-                            // Marcar el par como encontrado en la matriz
-                            cartas_pares_encontrados[i][j] = true;
-                            cartas_pares_encontrados[estruct2.prim_carta_fila][estruct2.prim_carta_columna] = true;
-
-                            // Ambas cartas son iguales, reiniciar las coordenadas de ambas cartas
-                            estruct2.prim_carta_fila = -1;
-                            estruct2.prim_carta_columna = -1;
-                            estruct2.seg_carta_fila = -1;
-                            estruct2.seg_carta_columna = -1;
-                            estruct2.cartas_en_estado_1 = 0;
-                            estruct2.max_cartas_estado_1 = 2;
-
-                            // No permitir interacción con estas cartas
-                            continue;
-                        }
-                        else
-                        {
-                            // Las cartas no son iguales, esperar para volver a voltearlas
-                            SetMouseCursor(MOUSE_CURSOR_ARROW);
-                        }
-                    }
-                    else
-                    {
-                        // No hay carta volteada previamente, actualizar las coordenadas de la primera carta
-                        estruct2.prim_carta_fila = i;
-                        estruct2.prim_carta_columna = j;
-                        estruct2.seg_carta_fila = -1;
-                        estruct2.seg_carta_columna = -1;
-                    }
-
-                    // Cambiar el estado de la carta a 1
-                    estruct2.card_state[i][j] = true;
-                    estruct2.cartas_en_estado_1++;
-
-                    // Verificar si la segunda carta ya está volteada
-                    if (estruct2.seg_carta_fila != -1 && estruct2.seg_carta_columna != -1)
-                    {
-                        // No permitir interacción con estas cartas
-                        continue;
-                    }
-
-                    // No permitir interacción con la primera carta ya volteada
-                    continue;
-                }
-                else if (estruct2.card_state[i][j])
-                {
-                    // Si la carta estaba en estado 1, cambiarla a 0
-                    estruct2.card_state[i][j] = false;
-                    estruct2.cartas_en_estado_1--;
-
-                    // Reiniciar las coordenadas de la primera y segunda carta
-                    estruct2.prim_carta_fila = -1;
-                    estruct2.prim_carta_columna = -1;
-                    estruct2.seg_carta_fila = -1;
-                    estruct2.seg_carta_columna = -1;
-                }
-            }
-
-            // Dibujar cartas
-            int num_carta = estruct2.cartas[i][j];
-            Texture2D currentTexture;
-            if (estruct2.card_state[i][j])
-            {
-                currentTexture = GetCartaTexture_COLOR(todo3, num_carta);
-            }
-            else
-            {
-                currentTexture = todo3.carta_back;
-            }
-
-            DrawTexturePro(
-                currentTexture,
-                (Rectangle){0, 0, (float)currentTexture.width, (float)currentTexture.height},
-                carta,
-                (Vector2){0, 0},
-                0.0f,
-                WHITE);
-
-            char texto[30];
-            sprintf(texto, "Pares encontrados: %d", pares_encontrados);
-
-            int fontsize = 25;
-            int textoAncho = MeasureText(texto, fontsize);
-            int textoAlto = fontsize;
-
-            Color micolorpersonalizado = {14, 102, 85, 255};
-            DrawTextEx(archivos.font, texto, (Vector2){GetScreenWidth() - textoAncho - 10 - 90, GetScreenHeight() - textoAlto - 10}, fontsize, 2, micolorpersonalizado);
-        }
-    }
-}
-
-JuegoEstado jugar_colores(GameScreen currentScreen, cargas archivos, COLOR_cartas todo3, _colores &estruct2)
-{
-    DrawTexturePro(
-        archivos.backgroundTexture_colores,
-        (Rectangle){0, 0, (float)archivos.backgroundTexture_colores.width, (float)archivos.backgroundTexture_colores.height},
-        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-        (Vector2){0, 0},
-        0.0f,
-        WHITE);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    // Ajustar la posición y de los botones para moverlos a la parte superior de la pantalla
-    float buttonY = 0;
-    // Ajustar la posición x de los botones para moverlos a la derecha de la pantalla
-    float button2X = GetScreenWidth() - 2 * archivos.buttonTexture2.width / 4;
-    float button3X = 0;
-    float button4X = GetScreenWidth() - archivos.buttonTexture4.width / 4;
-    Rectangle buttonRect2 = {button2X, buttonY, (float)archivos.buttonTexture2.width / 4, (float)archivos.buttonTexture2.height / 4};
-    Rectangle buttonRect3 = {button3X, GetScreenHeight() - archivos.buttonTexture3.height / 4, (float)archivos.buttonTexture3.width / 4, (float)archivos.buttonTexture3.height / 4};
-    Rectangle buttonRect4 = {button4X, buttonY, (float)archivos.buttonTexture4.width / 4, (float)archivos.buttonTexture4.height / 4};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    bool isMouseOverButton2 = CheckCollisionPointRec(GetMousePosition(), buttonRect2);
-    bool isMouseOverButton3 = CheckCollisionPointRec(GetMousePosition(), buttonRect3);
-    bool isMouseOverButton4 = CheckCollisionPointRec(GetMousePosition(), buttonRect4);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    if (isMouseOverButton2)
-    {
-        /* AGRANDAR Y REDUCIR (2) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect2.width = archivos.buttonTexture2.width * scale;
-        buttonRect2.height = archivos.buttonTexture2.height * scale;
-    }
-
-    if (isMouseOverButton3)
-    {
-        /* AGRANDAR Y REDUCIR (3) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect3.width = archivos.buttonTexture3.width * scale;
-        buttonRect3.height = archivos.buttonTexture3.height * scale;
-    }
-
-    if (isMouseOverButton4)
-    {
-        /* AGRANDAR Y REDUCIR (4) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect4.width = archivos.buttonTexture4.width * scale;
-        buttonRect4.height = archivos.buttonTexture4.height * scale;
-    }
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    Vector2 buttonPosition2 = {buttonRect2.x + buttonRect2.width / 2, buttonRect2.y + buttonRect2.height / 2};
-    Vector2 buttonPosition3 = {buttonRect3.x + buttonRect3.width / 2, buttonRect3.y + buttonRect3.height / 2};
-    Vector2 buttonPosition4 = {buttonRect4.x + buttonRect4.width / 2, buttonRect4.y + buttonRect4.height / 2};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    DrawTexturePro(archivos.buttonTexture2, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture2.width), static_cast<float>(archivos.buttonTexture2.height)}, (Rectangle){buttonPosition2.x, buttonPosition2.y, buttonRect2.width, buttonRect2.height}, (Vector2){buttonRect2.width / 2, buttonRect2.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture3, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture3.width), static_cast<float>(archivos.buttonTexture3.height)}, (Rectangle){buttonPosition3.x, buttonPosition3.y, buttonRect3.width, buttonRect3.height}, (Vector2){buttonRect3.width / 2, buttonRect3.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
-
-    COLOR_memoria(todo3, estruct2, archivos);
-    if (IsKeyPressed(KEY_DELETE))
-    {
-        // Si se presiona DELETE, regresar al menú
-        return JUEGO_REGRESAR_MENU;
-    }
-
-    /* VERIFICAR SI SE HIZO CLIC EN EL BOTÓN */
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        if (isMouseOverButton2)
-            return FULLSCREEN; // Botón 2 clickeado
-        if (isMouseOverButton3)
-            return JUEGO_REGRESAR_MENU; // Botón 3 clickeado
-        if (isMouseOverButton4)
-            return MUSICA; // Botón 4 clickeado
-    }
-
-    // Si no hay cambio de pantalla, continúa jugando
-    return JUEGO_JUGANDO;
-}
-
-int drawjugar(GameScreen currentScreen, cargas archivos)
-{
-    // Resto del código de la función drawjugar...
-
-    DrawTexturePro(
-        archivos.backgroundTexture,
-        (Rectangle){0, 0, (float)archivos.backgroundTexture.width, (float)archivos.backgroundTexture.height},
-        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-        (Vector2){0, 0},
-        0.0f,
-        WHITE);
-
-    // Usar proporciones relativas para calcular las posiciones de los botones
-    float buttonStartY = 0.35f * GetScreenHeight(); // Ajusta el valor 0.35 según tus necesidades
-    float buttonSpacing = 0.2f * GetScreenHeight(); // Ajusta el valor 0.2 según tus necesidades
-
-    Rectangle buttonRectC = {(GetScreenWidth() - archivos.buttonTextureC.width) / 2, buttonStartY, (float)archivos.buttonTextureC.width, (float)archivos.buttonTextureC.height};
-    Rectangle buttonRectD = {(GetScreenWidth() - archivos.buttonTextureD.width) / 2, buttonStartY + buttonSpacing, (float)archivos.buttonTextureD.width, (float)archivos.buttonTextureD.height};
-    Rectangle buttonRectE = {(GetScreenWidth() - archivos.buttonTextureE.width) / 2, buttonStartY + 2 * buttonSpacing, (float)archivos.buttonTextureE.width, (float)archivos.buttonTextureE.height};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    // Ajustar la posición y de los botones para moverlos a la parte superior de la pantalla
-    float buttonY = 0;
-    // Ajustar la posición x de los botones para moverlos a la derecha de la pantalla
-    float button2X = GetScreenWidth() - 2 * archivos.buttonTexture2.width / 4;
-    float button3X = 0;
-    float button4X = GetScreenWidth() - archivos.buttonTexture4.width / 4;
-    Rectangle buttonRect2 = {button2X, buttonY, (float)archivos.buttonTexture2.width / 4, (float)archivos.buttonTexture2.height / 4};
-    Rectangle buttonRect3 = {button3X, GetScreenHeight() - archivos.buttonTexture3.height / 4, (float)archivos.buttonTexture3.width / 4, (float)archivos.buttonTexture3.height / 4};
-    Rectangle buttonRect4 = {button4X, buttonY, (float)archivos.buttonTexture4.width / 4, (float)archivos.buttonTexture4.height / 4};
-
-    /* VERIFICAR SI EL MOUSE ESTA SOBRE LOS BOTONES */
-    bool isMouseOverButtonC = CheckCollisionPointRec(GetMousePosition(), buttonRectC);
-    bool isMouseOverButtonD = CheckCollisionPointRec(GetMousePosition(), buttonRectD);
-    bool isMouseOverButtonE = CheckCollisionPointRec(GetMousePosition(), buttonRectE);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    bool isMouseOverButton2 = CheckCollisionPointRec(GetMousePosition(), buttonRect2);
-    bool isMouseOverButton3 = CheckCollisionPointRec(GetMousePosition(), buttonRect3);
-    bool isMouseOverButton4 = CheckCollisionPointRec(GetMousePosition(), buttonRect4);
-
-    /* CAMBIAR EL TAMAÑO DEL BOTON (C,D,E) SI EL MOUSE ESTA SOBRE DE EL */
-    if (isMouseOverButtonC)
-    {
-        /* AGRANDAR Y REDUCIR (C) */
-        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
-        buttonRectC.width = archivos.buttonTextureC.width * scale;
-        buttonRectC.height = archivos.buttonTextureC.height * scale;
-    }
-
-    if (isMouseOverButtonD)
-    {
-        /* AGRANDAR Y REDUCIR (D) */
-        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
-        buttonRectD.width = archivos.buttonTextureD.width * scale;
-        buttonRectD.height = archivos.buttonTextureD.height * scale;
-    }
-
-    if (isMouseOverButtonE)
-    {
-        /* AGRANDAR Y REDUCIR (E) */
-        float scale = 1.0f + 0.05f * sin(2.0f * GetTime());
-        buttonRectE.width = archivos.buttonTextureE.width * scale;
-        buttonRectE.height = archivos.buttonTextureE.height * scale;
-    }
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    if (isMouseOverButton2)
-    {
-        /* AGRANDAR Y REDUCIR (2) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect2.width = archivos.buttonTexture2.width * scale;
-        buttonRect2.height = archivos.buttonTexture2.height * scale;
-    }
-
-    if (isMouseOverButton3)
-    {
-        /* AGRANDAR Y REDUCIR (2) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect3.width = archivos.buttonTexture3.width * scale;
-        buttonRect3.height = archivos.buttonTexture3.height * scale;
-    }
-
-    if (isMouseOverButton4)
-    {
-        /* AGRANDAR Y REDUCIR (4) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect4.width = archivos.buttonTexture4.width * scale;
-        buttonRect4.height = archivos.buttonTexture4.height * scale;
-    }
-
-    /* AJUSTAR LA POSICION DEL BOTON PARA QUE ESTE EN EL CENTRO */
-    Vector2 buttonPosition = {buttonRectC.x + buttonRectC.width / 2, buttonRectC.y + buttonRectE.height / 2};
-    Vector2 buttonPositionD = {buttonRectD.x + buttonRectD.width / 2, buttonRectD.y + buttonRectD.height / 2};
-    Vector2 buttonPositionE = {buttonRectE.x + buttonRectE.width / 2, buttonRectE.y + buttonRectE.height / 2};
-    DrawTexturePro(archivos.buttonTextureC, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTextureC.width), static_cast<float>(archivos.buttonTextureC.height)}, (Rectangle){buttonPosition.x, buttonPosition.y, buttonRectC.width, buttonRectC.height}, (Vector2){buttonRectC.width / 2, buttonRectC.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTextureD, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTextureD.width), static_cast<float>(archivos.buttonTextureD.height)}, (Rectangle){buttonPositionD.x, buttonPositionD.y, buttonRectD.width, buttonRectD.height}, (Vector2){buttonRectD.width / 2, buttonRectD.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTextureE, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTextureE.width), static_cast<float>(archivos.buttonTextureE.height)}, (Rectangle){buttonPositionE.x, buttonPositionE.y, buttonRectE.width, buttonRectE.height}, (Vector2){buttonRectE.width / 2, buttonRectE.height / 2}, 0.0f, WHITE);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    Vector2 buttonPosition2 = {buttonRect2.x + buttonRect2.width / 2, buttonRect2.y + buttonRect2.height / 2};
-    Vector2 buttonPosition3 = {buttonRect3.x + buttonRect3.width / 2, buttonRect3.y + buttonRect3.height / 2};
-    Vector2 buttonPosition4 = {buttonRect4.x + buttonRect4.width / 2, buttonRect4.y + buttonRect4.height / 2};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    DrawTexturePro(archivos.buttonTexture2, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture2.width), static_cast<float>(archivos.buttonTexture2.height)}, (Rectangle){buttonPosition2.x, buttonPosition2.y, buttonRect2.width, buttonRect2.height}, (Vector2){buttonRect2.width / 2, buttonRect2.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture3, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture3.width), static_cast<float>(archivos.buttonTexture3.height)}, (Rectangle){buttonPosition3.x, buttonPosition3.y, buttonRect3.width, buttonRect3.height}, (Vector2){buttonRect3.width / 2, buttonRect3.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
-
-    /* VERIFICAR SI SE HIZO CLICK EN EL BOTON */
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        if (isMouseOverButtonC)
-            return 1; // Botón C clickeado
-        if (isMouseOverButtonD)
-            return 2; // Botón D clickeado
-        if (isMouseOverButtonE)
-            return 3; // Botón D clickeado
-        if (isMouseOverButton2)
-            return 4; // Botón 2 clickeado
-        if (isMouseOverButton3)
-            return 6; // Botón 3 clickeado
-        if (isMouseOverButton4)
-            return 5; // Botón 4 clickeado
-    }
-
-    return 0; // Ningún botón
-}
-
-int drawcreditos(cargas archivos)
-{
-    DrawTexturePro(
-        archivos.backgroundTexture_creditos,
-        (Rectangle){0, 0, (float)archivos.backgroundTexture_creditos.width, (float)archivos.backgroundTexture_creditos.height},
-        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
-        (Vector2){0, 0},
-        0.0f,
-        WHITE);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    // Ajustar la posición y de los botones para moverlos a la parte superior de la pantalla
-    float buttonY = 0;
-    // Ajustar la posición x de los botones para moverlos a la derecha de la pantalla
-    float button2X = GetScreenWidth() - 2 * archivos.buttonTexture2.width / 4;
-    float button3X = 0;
-    float button4X = GetScreenWidth() - archivos.buttonTexture4.width / 4;
-    Rectangle buttonRect2 = {button2X, buttonY, (float)archivos.buttonTexture2.width / 4, (float)archivos.buttonTexture2.height / 4};
-    Rectangle buttonRect3 = {button3X, GetScreenHeight() - archivos.buttonTexture3.height / 4, (float)archivos.buttonTexture3.width / 4, (float)archivos.buttonTexture3.height / 4};
-    Rectangle buttonRect4 = {button4X, buttonY, (float)archivos.buttonTexture4.width / 4, (float)archivos.buttonTexture4.height / 4};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    bool isMouseOverButton2 = CheckCollisionPointRec(GetMousePosition(), buttonRect2);
-    bool isMouseOverButton3 = CheckCollisionPointRec(GetMousePosition(), buttonRect3);
-    bool isMouseOverButton4 = CheckCollisionPointRec(GetMousePosition(), buttonRect4);
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    if (isMouseOverButton2)
-    {
-        /* AGRANDAR Y REDUCIR (2) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect2.width = archivos.buttonTexture2.width * scale;
-        buttonRect2.height = archivos.buttonTexture2.height * scale;
-    }
-
-    if (isMouseOverButton3)
-    {
-        /* AGRANDAR Y REDUCIR (2) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect3.width = archivos.buttonTexture3.width * scale;
-        buttonRect3.height = archivos.buttonTexture3.height * scale;
-    }
-
-    if (isMouseOverButton4)
-    {
-        /* AGRANDAR Y REDUCIR (4) */
-        float scale = 0.2f + 0.02f * sin(2.0f * GetTime());
-        buttonRect4.width = archivos.buttonTexture4.width * scale;
-        buttonRect4.height = archivos.buttonTexture4.height * scale;
-    }
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    Vector2 buttonPosition2 = {buttonRect2.x + buttonRect2.width / 2, buttonRect2.y + buttonRect2.height / 2};
-    Vector2 buttonPosition3 = {buttonRect3.x + buttonRect3.width / 2, buttonRect3.y + buttonRect3.height / 2};
-    Vector2 buttonPosition4 = {buttonRect4.x + buttonRect4.width / 2, buttonRect4.y + buttonRect4.height / 2};
-
-    // BOTONES DE VOLUMEN Y TAMAÑO DE PANTALLA -------------------------------------
-    DrawTexturePro(archivos.buttonTexture2, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture2.width), static_cast<float>(archivos.buttonTexture2.height)}, (Rectangle){buttonPosition2.x, buttonPosition2.y, buttonRect2.width, buttonRect2.height}, (Vector2){buttonRect2.width / 2, buttonRect2.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture3, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture3.width), static_cast<float>(archivos.buttonTexture3.height)}, (Rectangle){buttonPosition3.x, buttonPosition3.y, buttonRect3.width, buttonRect3.height}, (Vector2){buttonRect3.width / 2, buttonRect3.height / 2}, 0.0f, WHITE);
-    DrawTexturePro(archivos.buttonTexture4, (Rectangle){0.0f, 0.0f, static_cast<float>(archivos.buttonTexture4.width), static_cast<float>(archivos.buttonTexture4.height)}, (Rectangle){buttonPosition4.x, buttonPosition4.y, buttonRect4.width, buttonRect4.height}, (Vector2){buttonRect4.width / 2, buttonRect4.height / 2}, 0.0f, WHITE);
-
-    /* VERIFICAR SI SE HIZO CLICK EN EL BOTON */
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        if (isMouseOverButton2)
-            return 1; // Botón 2 clickeado
-        if (isMouseOverButton3)
-            return 2; // Botón 3 clickeado
-        if (isMouseOverButton4)
-            return 3; // Botón 4 clickeado
-    }
-
-    return 0; // Ningún botón
-}
-
-void menudraw(GameScreen currentScreen, cargas archivos, cartas todo, LETRAS_cartas todo2, COLOR_cartas todo3, memorama estruct, _colores estruct2, Letras estruct3)
+void DrawMenu(files assets, GameScreen pantalla)
 {
     BeginDrawing();
-    ClearBackground(RAYWHITE);
+    DrawTexturePro(
+        assets.background,
+        (Rectangle){0, 0, (float)assets.background.width, (float)assets.background.height},
+        (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+        (Vector2){0, 0},
+        0.0f,
+        WHITE);
 
-    switch (currentScreen)
-    {
-    case INICIO:
-    {
-        drawinicio(archivos);
-        break;
-    }
-    case JUGAR:
-    {
-        drawjugar(currentScreen, archivos);
-        break;
-    }
-    case CREDITOS:
-    {
-        drawcreditos(archivos);
-        break;
-    }
-    case JUGAR_BASICO:
-    {
-        jugar_basico(currentScreen, archivos, todo, estruct);
-        break;
-    }
-    case JUGAR_LETRAS:
-    {
-        jugar_letras(currentScreen, archivos, todo2, estruct3);
-        break;
-    }
-    case JUGAR_COLORES:
-    {
-        jugar_colores(currentScreen, archivos, todo3, estruct2);
-        break;
-    }
-    default:
-        break;
-    }
+    // DrawText("Press ENTER to start", 50, 250, 30, YELLOW);
+    animetext("Press ENTER to start", 25, 250, 20, assets);
+    DrawText("made by: @andreagori", 80, 380, 10, BLACK);
+
+    // Dibuja el grid de fondo gris.
+    grid(450, 450);
 
     EndDrawing();
 }
 
-void ToggleFullscreenAndResize()
+void gridSnake(int height_cellsnumber, int width_cellsnumber, int gridHeight, int gridWidth)
 {
-    // Resto del código de la función ToggleFullscreenAndResize...
-    if (IsKeyPressed(KEY_F))
+    // Implement the logic for gridSnake function.
+    // For customization in color, check raylib library or use: CLITERAL(Color){ x, x, x, x }
+    // Before everthing, we need to make sure the grid and rectangles will be in the middle.
+    // Calculate the starting point to draw the grid, in the middle.
+    int startX = (screenWidth - gridWidth) / 2;
+    int startY = (screenHeight - gridHeight) / 2;
+
+    // Draw the rectangle of the grid
+    DrawRectangle(startX, startY, gridWidth, gridHeight, LIME);
+
+    // Calculate the size of each cell.
+    int cellWidth = gridWidth / width_cellsnumber;
+    int cellHeight = gridHeight / height_cellsnumber;
+
+    // Draw the grid lines
+    for (int i = 0; i <= height_cellsnumber; ++i)
     {
-        // Cambiar a pantalla completa al presionar F11
-        ToggleFullscreen();
-
-        // Ajustar el tamaño de la ventana al cambiar a pantalla completa
-        if (IsWindowFullscreen())
-        {
-            screenWidth = GetMonitorWidth(0);
-            screenHeight = GetMonitorHeight(0);
-        }
-        else
-        {
-            // Restaurar la resolución original al salir de pantalla completa
-            screenWidth = GetMonitorWidth(0);
-            screenHeight = GetMonitorHeight(0);
-        }
-
-        // Cambiar el tamaño de la ventana
-        SetWindowSize(screenWidth, screenHeight);
+        DrawLine(startX, startY + i * cellHeight, startX + gridWidth, startY + i * cellHeight, BLACK);
     }
+
+    for (int j = 0; j <= width_cellsnumber; ++j)
+    {
+        DrawLine(startX + j * cellWidth, startY, startX + j * cellWidth, startY + gridHeight, BLACK);
+    }
+}
+
+void Drawgame(Snake *snake, Apple *apple, int startX, int startY)
+{
+    BeginDrawing();
+    ClearBackground(CLITERAL(Color){2, 43, 15, 255});
+    DrawText("[TAB] para volver al menu", 10, 10, 15, YELLOW);
+
+    // Dibuja el grid de fondo gris.
+    grid(450, 450);
+    gridSnake(15, 15, 360, 360);
+
+    // Dibuja la serpiente y la manzana
+    int cellWidth = 360 / 15; // Assuming a 15x15 grid
+    int cellHeight = 360 / 15;
+
+    if (hasEatenFood(snake, apple, 15, 15))
+    {
+        growSnake(snake, cellWidth, cellHeight);
+        initApple(apple, 360, 360, 15, 15, startX, startY);
+    }
+
+    drawSnake(snake, 15, 15, 360, 360);
+    drawApple(apple, snake->head, 15, 15, 360, 360, cellHeight, cellWidth, startX, startY);
+    EndDrawing();
 }
