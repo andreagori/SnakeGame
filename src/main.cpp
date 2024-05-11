@@ -94,6 +94,11 @@ int main(void)
             }
             else
             {
+                if (hasEatenFood(&snake, &apple, 15, 15))
+                {
+                    growSnake(&snake, 15, 15);
+                    initApple(&apple, 360, 360, 15, 15, startX, startY);
+                }
                 Drawgame(&snake, &apple, startX, startY);
             }
             break;
@@ -247,12 +252,6 @@ void Drawgame(Snake *snake, Apple *apple, int startX, int startY)
 
     drawSnake(snake, 15, 15, 360, 360);
     drawApple(apple, snake->head, 15, 15, 360, 360, cellHeight, cellWidth, startX, startY);
-
-    if (hasEatenFood(snake, apple, 15, 15))
-    {
-        growSnake(snake, cellWidth, cellHeight);
-        initApple(apple, 360, 360, 15, 15, startX, startY);
-    }
 
     EndDrawing();
 }

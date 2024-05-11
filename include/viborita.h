@@ -6,13 +6,13 @@
 #include <conio.h>
 
 // DEFINES
-#define VELOCITY 1
+#define VELOCITY 2
 
 // STRUCTURES
 typedef struct NodeSnake
 {
-    int axisX, axisY;
-    int prevX, prevY;
+    int axisX, axisY = 0;
+    int prevX, prevY = 0;
     struct NodeSnake *next;
 } NodeSnake;
 
@@ -198,6 +198,15 @@ void snakemovement(Snake *snake, int height_cellsnumber, int width_cellsnumber, 
         prevY = tempY;
         current = current->next;
     }
+
+    // Reset current to the head of the snake
+    current = snake->head;
+
+    while (current != NULL)
+    {
+        DrawRectangle(current->axisX, current->axisY, cellWidth, cellHeight, RED);
+        current = current->next;
+    }
 }
 
 void drawSnake(Snake *snake, int height_cellsnumber, int width_cellsnumber, int gridHeight, int gridWidth)
@@ -227,48 +236,6 @@ void drawSnake(Snake *snake, int height_cellsnumber, int width_cellsnumber, int 
     {
         snake->direction = DOWN;
     }
-
-    // Mueve la serpiente en la dirección actual
-    while (current != NULL)
-    {
-        switch (snake->direction)
-        {
-        case RIGHT:
-            if (current->axisX < startX + gridWidth - cellWidth)
-            {
-                current->axisX += VELOCITY;
-            }
-            break;
-        case LEFT:
-            if (current->axisX > startX)
-            {
-                current->axisX -= VELOCITY; // Utiliza VELOCITY definido previamente
-            }
-            break;
-        case UP:
-            if (current->axisY > startY)
-            {
-                current->axisY -= VELOCITY; // Utiliza VELOCITY definido previamente
-            }
-            break;
-        case DOWN:
-            if (current->axisY < startY + gridHeight - cellHeight)
-            {
-                current->axisY += VELOCITY; // Utiliza VELOCITY definido previamente
-            }
-            break;
-        }
-        current = current->next;
-    }
-
-    // Vuelve a establecer current al inicio de la serpiente
-    current = snake->head;
-    while (current != NULL)
-    {
-        DrawRectangle(current->axisX, current->axisY, cellWidth, cellHeight, RED);
-        current = current->next;
-    }
-
     // Snake Movement
     snakemovement(snake, height_cellsnumber, width_cellsnumber, gridHeight, gridWidth);
 }
