@@ -94,11 +94,6 @@ int main(void)
             }
             else
             {
-                if (hasEatenFood(&snake, &apple, 15, 15))
-                {
-                    growSnake(&snake, 15, 15);
-                    initApple(&apple, 360, 360, 15, 15, startX, startY); // Reinitialize the apple
-                }
                 Drawgame(&snake, &apple, startX, startY);
             }
             break;
@@ -112,10 +107,6 @@ int main(void)
             DrawMenu(assets, currentScreen);
         }
 
-        // if (currentScreen == GAME)
-        // {
-        //     Drawgame(&snake, &apple, startX, startY);
-        // }
     }
     unload(assets);
     UnloadImage(icon);
@@ -254,13 +245,14 @@ void Drawgame(Snake *snake, Apple *apple, int startX, int startY)
     int cellWidth = 360 / 15; // Assuming a 15x15 grid
     int cellHeight = 360 / 15;
 
+    drawSnake(snake, 15, 15, 360, 360);
+    drawApple(apple, snake->head, 15, 15, 360, 360, cellHeight, cellWidth, startX, startY);
+
     if (hasEatenFood(snake, apple, 15, 15))
     {
         growSnake(snake, cellWidth, cellHeight);
         initApple(apple, 360, 360, 15, 15, startX, startY);
     }
 
-    drawSnake(snake, 15, 15, 360, 360);
-    drawApple(apple, snake->head, 15, 15, 360, 360, cellHeight, cellWidth, startX, startY);
     EndDrawing();
 }

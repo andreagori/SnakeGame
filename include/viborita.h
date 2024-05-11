@@ -138,10 +138,66 @@ void growSnake(Snake *snake, int cellWidth, int cellHeight)
     }
     newNode->prevX = newNode->axisX;
     newNode->prevY = newNode->axisY;
+
     newNode->next = NULL;
     snake->tail->next = newNode;
     snake->tail = newNode;
     snake->size++;
+}
+
+void snakemovement(Snake *snake, int height_cellsnumber, int width_cellsnumber, int gridHeight, int gridWidth)
+{
+    NodeSnake *current = snake->head;
+    int cellWidth = gridWidth / width_cellsnumber;
+    int cellHeight = gridHeight / height_cellsnumber;
+    // Calcula el punto de inicio para dibujar la cuadrícula, en el medio.
+    int startX = (GetScreenWidth() - gridWidth) / 2;
+    int startY = (GetScreenHeight() - gridHeight) / 2;
+
+    int prevX = current->axisX;
+    int prevY = current->axisY;
+
+    // Move the head of the snake
+    switch (snake->direction)
+    {
+    case RIGHT:
+        if (current->axisX < startX + gridWidth - cellWidth)
+        {
+            current->axisX += VELOCITY;
+        }
+        break;
+    case LEFT:
+        if (current->axisX > startX)
+        {
+            current->axisX -= VELOCITY;
+        }
+        break;
+    case UP:
+        if (current->axisY > startY)
+        {
+            current->axisY -= VELOCITY;
+        }
+        break;
+    case DOWN:
+        if (current->axisY < startY + gridHeight - cellHeight)
+        {
+            current->axisY += VELOCITY;
+        }
+        break;
+    }
+
+    // Move the rest of the snake
+    current = current->next;
+    while (current != NULL)
+    {
+        int tempX = current->axisX;
+        int tempY = current->axisY;
+        current->axisX = prevX;
+        current->axisY = prevY;
+        prevX = tempX;
+        prevY = tempY;
+        current = current->next;
+    }
 }
 
 void drawSnake(Snake *snake, int height_cellsnumber, int width_cellsnumber, int gridHeight, int gridWidth)
@@ -209,61 +265,12 @@ void drawSnake(Snake *snake, int height_cellsnumber, int width_cellsnumber, int 
     current = snake->head;
     while (current != NULL)
     {
-        DrawRectangle(current->axisX, current->axisY, cellWidth, cellHeight, BLUE);
+        DrawRectangle(current->axisX, current->axisY, cellWidth, cellHeight, RED);
         current = current->next;
     }
 
-    // Mueve la serpiente en la dirección actual
-    NodeSnake *prev = NULL;
-    current = snake->head;
-    while (current != NULL)
-    {
-        if (prev != NULL)
-        {
-            // Make the current node take the position of the previous node
-            int tempX = current->axisX;
-            int tempY = current->axisY;
-            current->axisX = prev->prevX;
-            current->axisY = prev->prevY;
-            current->prevX = tempX;
-            current->prevY = tempY;
-        }
-        else
-        {
-            // Move the head of the snake
-            current->prevX = current->axisX;
-            current->prevY = current->axisY;
-            switch (snake->direction)
-            {
-            case RIGHT:
-                if (current->axisX < startX + gridWidth - cellWidth)
-                {
-                    current->axisX += VELOCITY;
-                }
-                break;
-            case LEFT:
-                if (current->axisX > startX)
-                {
-                    current->axisX -= VELOCITY;
-                }
-                break;
-            case UP:
-                if (current->axisY > startY)
-                {
-                    current->axisY -= VELOCITY;
-                }
-                break;
-            case DOWN:
-                if (current->axisY < startY + gridHeight - cellHeight)
-                {
-                    current->axisY += VELOCITY;
-                }
-                break;
-            }
-        }
-        prev = current;
-        current = current->next;
-    }
+    // Snake Movement
+    snakemovement(snake, height_cellsnumber, width_cellsnumber, gridHeight, gridWidth);
 }
 
 bool collisions(Snake *snake, int height_cellsnumber, int width_cellsnumber, int gridHeight, int gridWidth)
