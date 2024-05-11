@@ -1,2 +1,2 @@
-# signmatchgame
-Juego ludico para Programacion Estructurada
+# VIBORITAZ
+Snake Game using *Linked Lists* in C.
