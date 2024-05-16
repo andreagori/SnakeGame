@@ -1,83 +1,79 @@
 /*******************************************************************************************
  *
  *   raylib game - snake.
+ *   This game is a simple implementation of the classic snake game.
+ *   School: Universidad Autonoma de Baja California. Facultad de Ingenieria, Arquitectura y Diseño.
+ *   Subject: Paradigmas de Programacion. (Programming Paradigms). 2024-5.
+ *   Author: Andrea.
  *
- *   Example originally created with raylib 1.5, last time updated with raylib 3.0
- *
- *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
- *   BSD-like license that allows static linking with closed source software
- *
- *   Copyright (c) 2016-2024 Ramon Santamaria (@raysan5)
- *
+ *  NOTE. I really enjoyed this project, despite the headaches it gave me. I learned a lot about linked lists and pointers.
+ *  I hope you enjoy it as much as I did. And I hope is well documented.
+ *  I will be happy to receive feedback and suggestions for improvement.
+ *  pS. Some function have uppercase letters because of the library used.
  ********************************************************************************************/
-// LIBRERIAS
+
+// LIBRARIES
 #include "viborita.h"
 
-// ESTRUCTURAS Y DEFINES.
+// USING DEFINES
 #define screenWidth 450
 #define screenHeight 450
 
-// PANTALLAS
+// STRUCTURES
+// SCREENS
 typedef enum GameScreen
 {
     MENU,
     GAME,
 } GameScreen;
 
+// FILES STRUCTURE
 typedef struct files
 {
     Texture2D background;
 } files;
 
-// DECLARACION DE FUNCIONES
+// FUNCTIONS DECLARATIONS.
 
 files load(files assets);
 void unload(files assets);
 void animetext(const char *texto, int fontsize, int textWidth, int textHeight, files assets);
 void grid(int height, int weight);
-void DrawMenu(files assets, GameScreen pantalla);
-void Drawgame(Snake *snake, Apple *apple, int startX, int startY);
+void draw_menu(files assets, GameScreen pantalla);
+void draw_game(Snake *snake, Apple *apple, int start_x, int start_y);
 
-//------------------------------------------------------------------------------------
-// FUNCION INT MAIN.
-//------------------------------------------------------------------------------------
+// Main function ------------------------
 int main(void)
 {
-    // Initialization
-    //--------------------------------------------------------------------------------------
+    // Initialization of the window ---------
     InitWindow(screenWidth, screenHeight, "Viboritaz - GAME");
-    SetTargetFPS(60);
-    InitAudioDevice();
-
+    SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+    // Load the icon and assets as well as the snake and apple.
     Image icon = LoadImage("resources/UABC_ANDREA_VIBORITAZ.png");
     SetWindowIcon(icon);
-    GameScreen currentScreen = MENU;
+    GameScreen current_screen = MENU;
     files assets;
     assets = load(assets);
     Snake snake;
     Apple apple;
-    int startX = (screenWidth - 360) / 2;
-    int startY = (screenHeight - 360) / 2;
 
-    SetTargetFPS(60); // Set our game to run at 60 frames-per-second
-    //--------------------------------------------------------------------------------------
+    // Calculate the starting point to draw the grid, in the middle.
+    int start_x = (screenWidth - 360) / 2;
+    int start_y = (screenHeight - 360) / 2;
 
-    // Main game loop
+    // Main game loop ---------
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
-        // Update
-        //----------------------------------------------------------------------------------
-        switch (currentScreen)
+        // Update the game logic ---------
+        switch (current_screen)
         {
         case MENU:
         {
             if (IsKeyPressed(KEY_ENTER))
             {
-                initSnake(&snake, 165, 213);
-                initApple(&apple, 360, 360, 15, 15, startX, startY); // Initialize the apple
-                // initApple(&apple, 150, 200);
-                // randomApple(&apple.axisX, &apple.axisY, 15, 15, 360, 360);
-                currentScreen = GAME;
+                init_snake(&snake, 165, 213);                           // Initialize the snake
+                init_apple(&apple, 360, 360, 15, 15, start_x, start_y); // Initialize the apple
+                current_screen = GAME;
             }
         }
         break;
@@ -85,21 +81,21 @@ int main(void)
         {
             if (IsKeyPressed(KEY_TAB))
             {
-                currentScreen = MENU;
+                current_screen = MENU;
             }
             if (collisions(&snake, 15, 15, 360, 360) != false)
             {
-                currentScreen = MENU;
-                freeSnake(&snake);
+                current_screen = MENU;
+                free_snake(&snake);
             }
             else
             {
-                if (hasEatenFood(&snake, &apple, 15, 15))
+                if (has_eaten_food(&snake, &apple, 15, 15))
                 {
-                    growSnake(&snake, 15, 15);
-                    initApple(&apple, 360, 360, 15, 15, startX, startY);
+                    grow_snake(&snake, 15, 15);
+                    init_apple(&apple, 360, 360, 15, 15, start_x, start_y);
                 }
-                Drawgame(&snake, &apple, startX, startY);
+                draw_game(&snake, &apple, start_x, start_y);
             }
             break;
         }
@@ -107,15 +103,16 @@ int main(void)
             //----------------------------------------------------------------------------------
         }
         // Dibujar la pantalla actual
-        if (currentScreen == MENU)
+        if (current_screen == MENU)
         {
-            DrawMenu(assets, currentScreen);
+            draw_menu(assets, current_screen);
         }
     }
     unload(assets);
     UnloadImage(icon);
     UnloadTexture(apple.appledrawing);
-    freeSnake(&snake);
+    free_snake(&snake);
+    free_apple(&apple);
     CloseWindow(); // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
@@ -135,7 +132,6 @@ void unload(files assets)
 
 void animetext(const char *texto, int fontSize, int textWidth, int textHeight, files assets)
 {
-    static int originalSize = fontSize;
     static int timer = 0;
 
     // Incrementar el temporizador
@@ -186,7 +182,7 @@ void grid(int height, int weight)
     }
 }
 
-void DrawMenu(files assets, GameScreen pantalla)
+void draw_menu(files assets, GameScreen pantalla)
 {
     BeginDrawing();
     DrawTexturePro(
@@ -213,11 +209,11 @@ void gridSnake(int height_cellsnumber, int width_cellsnumber, int gridHeight, in
     // For customization in color, check raylib library or use: CLITERAL(Color){ x, x, x, x }
     // Before everthing, we need to make sure the grid and rectangles will be in the middle.
     // Calculate the starting point to draw the grid, in the middle.
-    int startX = (screenWidth - gridWidth) / 2;
-    int startY = (screenHeight - gridHeight) / 2;
+    int start_x = (screenWidth - gridWidth) / 2;
+    int start_y = (screenHeight - gridHeight) / 2;
 
     // Draw the rectangle of the grid
-    DrawRectangle(startX, startY, gridWidth, gridHeight, LIME);
+    DrawRectangle(start_x, start_y, gridWidth, gridHeight, LIME);
 
     // Calculate the size of each cell.
     int cellWidth = gridWidth / width_cellsnumber;
@@ -226,16 +222,16 @@ void gridSnake(int height_cellsnumber, int width_cellsnumber, int gridHeight, in
     // Draw the grid lines
     for (int i = 0; i <= height_cellsnumber; ++i)
     {
-        DrawLine(startX, startY + i * cellHeight, startX + gridWidth, startY + i * cellHeight, BLACK);
+        DrawLine(start_x, start_y + i * cellHeight, start_x + gridWidth, start_y + i * cellHeight, BLACK);
     }
 
     for (int j = 0; j <= width_cellsnumber; ++j)
     {
-        DrawLine(startX + j * cellWidth, startY, startX + j * cellWidth, startY + gridHeight, BLACK);
+        DrawLine(start_x + j * cellWidth, start_y, start_x + j * cellWidth, start_y + gridHeight, BLACK);
     }
 }
 
-void Drawgame(Snake *snake, Apple *apple, int startX, int startY)
+void draw_game(Snake *snake, Apple *apple, int start_x, int start_y)
 {
     BeginDrawing();
     ClearBackground(CLITERAL(Color){2, 43, 15, 255});
@@ -249,8 +245,8 @@ void Drawgame(Snake *snake, Apple *apple, int startX, int startY)
     int cellWidth = 360 / 15; // Assuming a 15x15 grid
     int cellHeight = 360 / 15;
 
-    drawSnake(snake, 15, 15, 360, 360);
-    drawApple(apple, snake->head, 15, 15, 360, 360, cellHeight, cellWidth, startX, startY);
+    direction_snake(snake, 15, 15, 360, 360);
+    draw_apple(apple, snake->head, 15, 15, 360, 360, cellHeight, cellWidth, start_x, start_y);
 
     // Draw the score
     char scoreStr[50];
@@ -259,3 +255,11 @@ void Drawgame(Snake *snake, Apple *apple, int startX, int startY)
     DrawText(scoreStr, 10, 430, 20, YELLOW);
     EndDrawing();
 }
+
+/*
+Dudas de documentacion:
+La palabra clave const se debe usar siempre que sea apropiado. En barr dice que es una gran alternativa al uso del define? (entonces no lo incluyo en el codigo?)
+En donde deberia de poner el static?
+La palabra clave static se debe usar para declarar todas las funciones y variables que no necesitan ser visibles fuera del módulo en el que
+se declaran.
+*/
